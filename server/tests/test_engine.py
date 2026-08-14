@@ -63,6 +63,83 @@ def test_game_engine_head_to_body_collision():
     assert s_obs.alive is True
 
 
+def test_game_engine_head_to_head_collision():
+    engine = GameEngine(arena_width=3000.0, arena_height=3000.0, tick_rate=30)
+    engine.register_player("big", "BigSnake", "neon_blue")
+    engine.register_player("small", "SmallSnake", "cyber_pink")
+
+    s_big = engine.spawn_player_snake("big")
+    s_small = engine.spawn_player_snake("small")
+
+    s_big.mass = 50.0
+    s_small.mass = 10.0
+
+    # Big snake moving right from (985, 1000)
+    s_big.head = Vector2D(985.0, 1000.0)
+    s_big.angle = 0.0
+    s_big.target_angle = 0.0
+    s_big._init_body()
+
+    # Small snake moving left from (1015, 1000)
+    s_small.head = Vector2D(1015.0, 1000.0)
+    s_small.angle = 3.14159
+    s_small.target_angle = 3.14159
+    s_small._init_body()
+
+    engine.step(0.033)
+    assert s_small.alive is False
+    assert s_big.alive is True
+
+    # Test equal mass collision -> both die
+    engine2 = GameEngine()
+    s1 = engine2.spawn_player_snake("eq1")
+    s2 = engine2.spawn_player_snake("eq2")
+    s1.mass = 20.0
+    s2.mass = 20.0
+
+    s1.head = Vector2D(985.0, 1000.0)
+    s1.angle = 0.0
+    s1.target_angle = 0.0
+    s1._init_body()
+
+    s2.head = Vector2D(1015.0, 1000.0)
+    s2.angle = 3.14159
+    s2.target_angle = 3.14159
+    s2._init_body()
+
+    engine2.step(0.033)
+    assert s1.alive is False
+    assert s2.alive is False
+
+
+def test_player_removal_and_respawn():
+    engine = GameEngine()
+    snake = engine.spawn_player_snake("p-respawn")
+    snake.mass = 30.0
+
+    # Process input with boost
+    engine.process_input("p-respawn", angle=1.0, boost=True, seq=1)
+    assert snake.boost is True
+
+    # Process input for unknown player
+    engine.process_input("unknown", angle=1.0, boost=False, seq=1)
+
+    # Respawn unknown player
+    assert engine.respawn_player("unknown") is None
+
+    # Respawn valid player
+    new_snake = engine.respawn_player("p-respawn")
+    assert new_snake is not None
+
+    # Remove player
+    engine.remove_player("p-respawn")
+    assert "p-respawn" not in engine.players
+    assert "p-respawn" not in engine.snakes
+
+    # Remove unknown player
+    engine.remove_player("unknown")
+
+
 def test_game_engine_snapshot_schema_validation(validator: type[SchemaValidator]):
     engine = GameEngine(arena_width=3000.0, arena_height=3000.0, tick_rate=30)
     engine.register_player("p-1", "Viper1", "neon_blue")

@@ -26,8 +26,8 @@ jobs:
       - name: Install dependencies
         run: uv sync
 
-      - name: Run pytest test suite
-        run: uv run pytest -v
+      - name: Run pytest test suite with coverage gate (>= 80%)
+        run: uv run pytest
 
   frontend-test:
     name: Frontend Tests (vitest & build)
@@ -45,8 +45,8 @@ jobs:
       - name: Install frontend dependencies
         run: cd client && npm ci
 
-      - name: Run vitest
-        run: cd client && npm test -- --run
+      - name: Run vitest with coverage gate (>= 80%)
+        run: cd client && npm test
 
       - name: Build frontend distribution
         run: cd client && npm run build

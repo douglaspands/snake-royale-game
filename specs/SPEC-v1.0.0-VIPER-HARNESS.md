@@ -10,3 +10,4 @@
 - **Packet Schema Validation:** All WebSocket events tested against JSON schemas with `schema_validator.py`.
 - **Sub-2s Execution Target:** Full test suite completes in $< 2.0\text{ seconds}$.
 - **Frontend Mocks:** Complete simulation of `CanvasRenderingContext2D`, `requestAnimationFrame`, and multi-touch `PointerEvents`.
+- **Minimum 80% Code Coverage Gate:** Automated tests must cover at least 80% of lines and statements across backend and frontend.

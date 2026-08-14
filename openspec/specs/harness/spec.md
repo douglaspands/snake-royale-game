@@ -14,6 +14,7 @@ The Test Harness provides deterministic, non-blocking simulation environments fo
 2. **Virtual Clock Discretization:** Time moves forward solely via `clock.advance(dt)` or `engine.step(dt)`.
 3. **Execution Budget:** Entire test suite (Backend + Frontend) MUST complete in $< 2.0\text{ seconds}$.
 4. **Schema Conformance:** Every generated mock packet must be automatically validated against the JSON schemas in `protocol/spec.md`.
+5. **Code Coverage Gate (REQ-HARN-006):** Automated test suites MUST maintain a minimum of 80% line and statement coverage across both backend and frontend production source code. CI pipelines MUST fail if coverage falls below 80%.
 
 ---
 

@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { Camera } from '../src/render/camera';
 import { GameRenderer } from '../src/render/renderer';
 import { MockCanvasElement } from './harness/canvas_mock';
-import { PacketGenerator } from './harness/packet_generator';
+import { PacketGenerator, FoodSnapshotData, SnakeSnapshotData } from './harness/packet_generator';
 import { EntityInterpolator } from '../src/net/interpolator';
 
 describe('Rendering & Nameplate Stabilization (REQ-REND-001 / REQ-REND-002)', () => {
@@ -61,5 +61,65 @@ describe('Rendering & Nameplate Stabilization (REQ-REND-001 / REQ-REND-002)', ()
     const textY = nameCall!.args[2];
     expect(Number.isInteger(textX)).toBe(true);
     expect(Number.isInteger(textY)).toBe(true);
+  });
+
+  it('should render all food types (corpse, boost drop, normal) and cull out-of-bounds food', () => {
+    const canvas = new MockCanvasElement();
+    const cam = new Camera(800, 600, 1.0);
+    cam.follow(500, 500, true);
+    const renderer = new GameRenderer(canvas as unknown as HTMLCanvasElement, cam);
+
+    const foods: FoodSnapshotData[] = [
+      { id: 1, x: 510, y: 510, val: 1.0, type: 'normal' },
+      { id: 2, x: 520, y: 520, val: 2.0, type: 'boost_drop' },
+      { id: 3, x: 530, y: 530, val: 10.0, type: 'corpse' },
+      { id: 4, x: 2800, y: 2800, val: 1.0, type: 'normal' }, // Off-screen -> Culled
+    ];
+
+    const snake = PacketGenerator.createLinearSnake('s-1', 500, 500);
+    const snapshot = PacketGenerator.createSnapshot(1, 1000, [snake], foods);
+    const interpolator = new EntityInterpolator();
+    interpolator.pushSnapshot(snapshot);
+
+    const worldState = interpolator.getInterpolatedState(1000);
+    renderer.render(worldState, 's-1');
+
+    expect(canvas.context.drawCalls.length).toBeGreaterThan(10);
+  });
+
+  it('should render boost glow, skins and virtual joystick overlay when active', () => {
+    const canvas = new MockCanvasElement();
+    const cam = new Camera(800, 600, 1.0);
+    const renderer = new GameRenderer(canvas as unknown as HTMLCanvasElement, cam);
+
+    const snake: SnakeSnapshotData = {
+      id: 'boost-snake',
+      nickname: 'Booster',
+      skin: 'solar_gold',
+      head: { x: 500, y: 500, angle: 0 },
+      body: [{ x: 490, y: 500 }],
+      mass: 50,
+      alive: true,
+      score: 500,
+      boost: true,
+    };
+
+    const snapshot = PacketGenerator.createSnapshot(1, 1000, [snake]);
+    const interpolator = new EntityInterpolator();
+    interpolator.pushSnapshot(snapshot);
+
+    const joystickState = {
+      active: true,
+      baseX: 100,
+      baseY: 300,
+      knobX: 130,
+      knobY: 300,
+      radius: 60,
+    };
+
+    const worldState = interpolator.getInterpolatedState(1000);
+    renderer.render(worldState, 'boost-snake', joystickState);
+
+    expect(canvas.context.drawCalls.length).toBeGreaterThan(15);
   });
 });

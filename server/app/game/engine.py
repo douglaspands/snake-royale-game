@@ -187,6 +187,11 @@ class GameEngine:
                 if not other_snake:
                     continue
 
+                # If touching enemy neck segment while in head-to-head range, defer to head-to-head resolution
+                if seg_ref.snake_id != snake.id and seg_ref.segment_idx <= 2:
+                    if snake.head.distance_to(other_snake.head) <= (snake.head_radius + other_snake.head_radius) * 1.1:
+                        continue
+
                 d = snake.head.distance_to(seg_ref.pos)
                 threshold = (snake.head_radius + other_snake.body_radius) * 0.85
                 if d < threshold:

@@ -1,8 +1,28 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import { DesktopController } from '../src/input/desktop_controller';
 import { VirtualJoystick } from '../src/input/virtual_joystick';
 
 describe('Desktop Controller', () => {
+  let eventListeners: Record<string, Array<(e: any) => void>>;
+
+  beforeEach(() => {
+    eventListeners = {};
+    const mockWindow = {
+      innerWidth: 800,
+      innerHeight: 600,
+      addEventListener: (evt: string, cb: (e: any) => void) => {
+        if (!eventListeners[evt]) eventListeners[evt] = [];
+        eventListeners[evt].push(cb);
+      },
+      dispatchEvent: (evt: any) => {
+        const cbs = eventListeners[evt.type] || [];
+        for (const cb of cbs) cb(evt);
+        return true;
+      },
+    };
+    (globalThis as any).window = mockWindow;
+  });
+
   it('should calculate mouse aim angle relative to screen center', () => {
     const controller = new DesktopController();
     // Cursor to the right of center -> angle 0
@@ -14,11 +34,57 @@ describe('Desktop Controller', () => {
     expect(controller.getAngle()).toBeCloseTo(Math.PI / 2, 3);
   });
 
-  it('should toggle boost state', () => {
+  it('should toggle boost state manually', () => {
     const controller = new DesktopController();
     expect(controller.isBoost()).toBe(false);
     controller.setBoost(true);
     expect(controller.isBoost()).toBe(true);
+  });
+
+  it('should handle keyboard WASD, Arrow keys and Spacebar turbo', () => {
+    const controller = new DesktopController();
+
+    // Trigger KeyW (Up)
+    window.dispatchEvent({ type: 'keydown', code: 'KeyW' } as unknown as Event);
+    expect(controller.getAngle()).toBeCloseTo(-Math.PI / 2, 3);
+
+    // Trigger KeyD (Up + Right)
+    window.dispatchEvent({ type: 'keydown', code: 'KeyD' } as unknown as Event);
+    expect(controller.getAngle()).toBeCloseTo(-Math.PI / 4, 3);
+
+    // Trigger Space (Boost)
+    window.dispatchEvent({ type: 'keydown', code: 'Space' } as unknown as Event);
+    expect(controller.isBoost()).toBe(true);
+
+    // Release KeyW and KeyD
+    window.dispatchEvent({ type: 'keyup', code: 'KeyW' } as unknown as Event);
+    window.dispatchEvent({ type: 'keyup', code: 'KeyD' } as unknown as Event);
+    window.dispatchEvent({ type: 'keyup', code: 'Space' } as unknown as Event);
+    expect(controller.isBoost()).toBe(false);
+
+    // Trigger ArrowLeft and ArrowDown
+    window.dispatchEvent({ type: 'keydown', code: 'ArrowLeft' } as unknown as Event);
+    window.dispatchEvent({ type: 'keydown', code: 'ArrowDown' } as unknown as Event);
+    expect(controller.getAngle()).toBeCloseTo((3 * Math.PI) / 4, 3);
+
+    window.dispatchEvent({ type: 'keyup', code: 'ArrowLeft' } as unknown as Event);
+    window.dispatchEvent({ type: 'keyup', code: 'ArrowDown' } as unknown as Event);
+  });
+
+  it('should handle mouse down, move and up events', () => {
+    const controller = new DesktopController();
+
+    // Mouse move
+    window.dispatchEvent({ type: 'mousemove', clientX: 600, clientY: 300 } as unknown as Event);
+    expect(controller.getAngle()).toBeCloseTo(0.0, 3);
+
+    // Left click down -> Boost
+    window.dispatchEvent({ type: 'mousedown', button: 0 } as unknown as Event);
+    expect(controller.isBoost()).toBe(true);
+
+    // Left click up
+    window.dispatchEvent({ type: 'mouseup', button: 0 } as unknown as Event);
+    expect(controller.isBoost()).toBe(false);
   });
 });
 
