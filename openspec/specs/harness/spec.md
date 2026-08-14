@@ -1,53 +1,50 @@
-# OpenSpec: Test Harness & Quality Invariants Specification
-**Domain:** `harness`  
-**Version:** `1.0.0-VIPER`  
-**Status:** `ACTIVE`  
+## Purpose
+Deterministic, non-blocking test harness and quality gate infrastructure for Python backend and TypeScript frontend without real-time sleep.
 
----
+## Requirements
 
-## 1. Test Harness Architecture & Objectives
+### Requirement: REQ-HARN-001 Deterministic Virtual Clock
+The test harness SHALL provide a virtual clock mechanism that advances simulation time in discrete steps without invoking real-time sleep functions.
 
-The Test Harness provides deterministic, non-blocking simulation environments for both Python (Backend) and TypeScript (Frontend).
+#### Scenario: Deterministic physics stepping
+- **WHEN** the virtual clock advances by delta time dt
+- **THEN** all scheduled callbacks and physics ticks execute synchronously without wall-clock delay
 
-### Key Invariants
-1. **Zero Real-Time Sleep:** No test case may invoke `time.sleep()`, `asyncio.sleep()` with non-zero simulated wall-clock, or `setTimeout()`.
-2. **Virtual Clock Discretization:** Time moves forward solely via `clock.advance(dt)` or `engine.step(dt)`.
-3. **Execution Budget:** Entire test suite (Backend + Frontend) MUST complete in $< 2.0\text{ seconds}$.
-4. **Schema Conformance:** Every generated mock packet must be automatically validated against the JSON schemas in `protocol/spec.md`.
-5. **Code Coverage Gate (REQ-HARN-006):** Automated test suites MUST maintain a minimum of 80% line and statement coverage across both backend and frontend production source code. CI pipelines MUST fail if coverage falls below 80%.
-6. **Backend Static Quality Gate (REQ-HARN-007):** The entire Python codebase (`server/app/` and `server/tests/`) MUST maintain 100% compliance with `ruff check`, `ruff format --check`, and `ty check` with zero errors, zero warnings, and zero type diagnostics.
+### Requirement: REQ-HARN-002 JSON Schema Packet Validation
+The test harness SHALL strictly validate all WebSocket message payloads against Draft-07 JSON schemas defined in the protocol specification.
 
----
+#### Scenario: Valid packet validation
+- **WHEN** a valid packet payload is checked
+- **THEN** the schema validator confirms compliance without errors
 
-## 2. Backend Test Harness Components (`server/tests/harness/`)
+#### Scenario: Invalid packet rejection
+- **WHEN** an invalid packet payload with missing required fields is checked
+- **THEN** the schema validator raises a validation error
 
-| Component | File | Responsibility |
-| :--- | :--- | :--- |
-| **Virtual Clock** | `virtual_clock.py` | Provides deterministic time advancement, stepping the physics simulation frame-by-frame with exact $\Delta t = 0.033\text{s}$. |
-| **Schema Validator** | `schema_validator.py` | Strict validation of WebSocket packets against draft-07 JSON Schemas. |
-| **Mock Client** | `mock_client.py` | In-memory client connection simulator capable of buffering incoming broadcast packets and asserting state deltas. |
-| **Entity Factories** | `factories.py` | Fixture generators for pre-configured snakes (head, segments, mass, skin) and food grids. |
+### Requirement: REQ-HARN-003 Mock Network Client Simulator
+The test harness SHALL provide an in-memory client connection simulator capable of buffering incoming broadcast packets and asserting state deltas.
 
----
+#### Scenario: Mock client message flow
+- **WHEN** the server broadcasts a message to the mock client
+- **THEN** the packet is buffered in memory for test assertions
 
-## 3. Frontend Test Harness Components (`client/tests/harness/`)
+### Requirement: REQ-HARN-004 Headless Canvas Mock and Touch Simulator
+The frontend test harness SHALL provide mocks for HTMLCanvasElement, CanvasRenderingContext2D, and PointerEvents simulation.
 
-| Component | File | Responsibility |
-| :--- | :--- | :--- |
-| **Canvas Mock** | `canvas_mock.ts` | Complete mock of `HTMLCanvasElement`, `CanvasRenderingContext2D` (tracking draw calls, strokes, fills, transforms) and `requestAnimationFrame`. |
-| **Touch Simulator** | `touch_simulator.ts` | Dispatches synthetic `PointerEvents` / `TouchEvent` sequences (pointerdown, pointermove, pointerup) to test virtual joystick and buttons. |
-| **Packet Generator** | `packet_generator.ts` | Generates chronological sequences of `WORLD_SNAPSHOT` packets with jitter, dropped frames and timestamp variations to test LERP interpolation. |
+#### Scenario: Headless canvas rendering
+- **WHEN** renderer draw calls execute in test environment
+- **THEN** canvas operations are recorded without requiring a real browser DOM
 
----
+### Requirement: REQ-HARN-005 Code Coverage Gate
+Automated test suites MUST maintain a minimum of 80% line and statement coverage across both backend and frontend production source code.
 
-## 4. Harness Invariant Verification Scenarios
+#### Scenario: Test suite coverage check
+- **WHEN** pytest or vitest runs with coverage measurement
+- **THEN** total coverage meets or exceeds 80%
 
-### Scenario: Deterministic Physics Replay
-- **GIVEN** an engine instance with seed $S = 42$ and 2 snake entities
-- **WHEN** 100 ticks are stepped with predefined input streams
-- **THEN** repeating the exact run on a fresh engine with seed $S = 42$ yields 100% identical positions and scores.
+### Requirement: REQ-HARN-006 Static Quality Gate
+The Python backend SHALL maintain 100% compliance with ruff linting, ruff formatting, and ty typechecking with zero errors.
 
-### Scenario: Schema Compliance on All Outgoing Packets
-- **GIVEN** the WebSocket handler broadcasting snapshots and death packets
-- **WHEN** any packet is emitted by the server
-- **THEN** `schema_validator.validate_packet(payload)` returns `True` without schema errors.
+#### Scenario: Backend quality verification
+- **WHEN** static analysis tools ruff and ty are executed
+- **THEN** all checks pass with exit code 0

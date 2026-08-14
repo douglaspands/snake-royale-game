@@ -1,27 +1,14 @@
-schema: "openspec-v1"
+schema: "spec-driven"
 project:
   name: "snake-battle-royale"
-  version: "1.0.0-VIPER"
+  version: "1.4.0-HUD-LAYOUT"
   description: "Real-time Multiplayer Snake Battle Royale Game (SDD + Graph Engineering)"
 
-context:
-  backend:
-    runtime: "Python 3.12+"
-    package_manager: "uv"
-    framework: "FastAPI + Uvicorn"
-    protocols: ["WebSocket"]
-    testing: "pytest + pytest-asyncio"
-    tick_rate: "30-40 Hz"
-    architecture: "Server-Authoritative"
-  frontend:
-    tooling: "Vite + TypeScript"
-    rendering: "HTML5 Canvas 2D (60-120 FPS)"
-    controls: ["Mouse", "WASD / Arrows", "Floating Virtual Joystick (Multi-Touch PointerEvents)"]
-    testing: "vitest + Canvas/Touch Mock Harness"
-    interpolation: "LERP (Linear Interpolation)"
-  distribution:
-    mode: "Single-Command Unified Server"
-    command: "uv run uvicorn server.app.main:app --host 0.0.0.0 --port 8000"
+context: |
+  Real-time Multiplayer Snake Battle Royale Game (SDD + Graph Engineering).
+  Backend: Python 3.12+, uv, FastAPI, Uvicorn, WebSockets, pytest, 30-40 Hz Server-Authoritative.
+  Frontend: Vite, TypeScript, Canvas 2D (60-120 FPS), LERP, vitest.
+  Unified server: Single command distribution via uvicorn.
 
 rules:
   proposals:

@@ -1,85 +1,54 @@
-# OpenSpec: Game Physics & Rules Engine Specification
-**Domain:** `physics`  
-**Version:** `1.2.0-MICRO-SNAKE`  
-**Status:** `ACTIVE`  
+## Purpose
+Deterministic 2D physics engine, inverse kinematics snake locomotion, mass-draining boost mechanics, agile turning dynamics, and pure-contact collision resolution.
 
----
+## Requirements
 
-## 1. Arena Geometry
-- **Arena Dimensions:** Width $W = 3000\text{ px}$, Height $H = 3000\text{ px}$.
-- **Coordinate System:** Origin $(0, 0)$ is at top-left; bounding boundaries are $x \in [0, W]$ and $y \in [0, H]$.
-- **Boundary Collision:** If head distance to arena edge $\le R_{head}$, the snake immediately dies.
+### Requirement: REQ-PHYS-001 Arena Boundaries and Geometry
+The physics simulation SHALL maintain a 2D bounding arena of 3000x3000 pixels where crossing boundary edges causes immediate snake death.
 
----
+#### Scenario: Arena boundary death
+- **WHEN** a snake head coordinates exceed arena bounds [0, 3000]
+- **THEN** the snake status transitions to dead and corpse pellets spawn
 
-## 2. Dynamic Snake Parameters
+### Requirement: REQ-PHYS-002 Locomotion and Boost Dynamics
+The engine SHALL propel snakes at base speed 180 px/s and turbo boost speed 360 px/s when mass exceeds minimum threshold 3.0.
 
-### 2.1 Velocity & Acceleration
-- **Base Speed:** $v_{\text{base}} = 180\text{ px/s}$ (at 30 Hz, $\Delta s = 6.0\text{ px/tick}$).
-- **Boost Speed:** $v_{\text{turbo}} = 360\text{ px/s}$ (at 30 Hz, $\Delta s = 12.0\text{ px/tick}$).
-- **Minimum Mass to Boost:** $M > 3.0$ (blocked at spawn/minimum size $M \le 3.0$).
-- **Boost Mass Drain:** When boosting, mass is drained at $\Delta M = 4.0\text{ mass/s}$ ($\approx 0.133\text{ mass/tick}$) down to $M = 3.0$ with auto-cutoff. Ejected mass spawns glowing boost pellets behind the tail conserving mass 1:1 ($\sum \text{pellet.val} = \Delta M_{\text{lost}}$).
+#### Scenario: Boost acceleration and mass drain
+- **WHEN** player activates boost with mass > 3.0
+- **THEN** speed increases to 360 px/s and mass is drained at 4.0 mass/s dropping boost pellets
 
-### 2.2 Dynamic Agile Turn Rate $\omega(M)$
-The snake's turning agility is dynamically governed as a function of mass $M$:
-$$\omega(M) = \omega_{\text{min}} + \frac{\omega_{\text{base}} - \omega_{\text{min}}}{1 + 0.015 \cdot \max(0, M - 3.0)}$$
-Where:
-- $\omega_{\text{base}} = 9.8\text{ rad/s}$ ($561.5^\circ/\text{s}$ at spawn mass $M = 3.0$).
-- $\omega_{\text{min}} = 5.2\text{ rad/s}$ ($298.0^\circ/\text{s}$ for giant snakes).
+#### Scenario: Boost cutoff at minimum mass
+- **WHEN** boosting snake mass reaches 3.0
+- **THEN** boost is automatically disabled and speed reverts to 180 px/s
 
-Angular step per tick of duration $\Delta t$:
-$$\Delta \theta = \text{clamp}\left(\text{normalize\_angle}(\theta_{\text{target}} - \theta_{\text{current}}), -\omega(M) \cdot \Delta t, +\omega(M) \cdot \Delta t\right)$$
+### Requirement: REQ-PHYS-003 Dynamic Agile Turn Rate
+The engine SHALL calculate maximum turning rate dynamically as a decreasing function of snake mass, ranging from 9.8 rad/s at spawn down to 5.2 rad/s for large snakes.
 
-### 2.3 Segment Physics & Length
-- **Head Radius:** $R_{\text{head}}(M) = 14 + \sqrt{M} \times 0.8\text{ px}$.
-- **Body Radius:** $R_{\text{body}}(M) = 12 + \sqrt{M} \times 0.7\text{ px}$.
-- **Segment Spacing:** Fixed distance $D_{\text{segment}} = 8\text{ px}$ between consecutive recorded trajectory points.
-- **Total Body Length:** $L(M) = 3 + \lfloor \max(0, M - 3.0) \times 1.5 \rfloor$ segments.
-- Segment follow mechanics follow inverse kinematics (each segment moves toward the previous segment preserving distance $D_{\text{segment}}$).
+#### Scenario: Agile turning on small snake
+- **WHEN** a snake with spawn mass 3.0 turns toward target angle
+- **THEN** turn rate angular velocity reaches up to 9.8 rad/s
 
----
+### Requirement: REQ-PHYS-004 Inverse Kinematics Body Segments
+The snake body SHALL follow the head using inverse kinematics with fixed 8px segment spacing and base length of 3 segments.
 
-## 3. Food Pellets & Mass Absorption
+#### Scenario: Segment trail follow
+- **WHEN** the snake head advances forward
+- **THEN** body segments smoothly follow the recorded trajectory points preserving 8px distance
 
-### 3.1 Pellet Types
-1. **Ambient Food:** Randomly distributed across the arena. Value $V_{\text{ambient}} = 1.0\text{ mass}$. Spawn target density: 600 active pellets in the arena.
-2. **Boost Drop Pellets:** Ejected behind boosting snakes with 1:1 mass conservation. Value $V_{\text{boost}} = 1.0\text{ mass}$.
-3. **Corpse Food Pellets:** When a snake of mass $M$ dies, it drops $K = \min(50, \lfloor L \times 0.7 \rfloor)$ food pellets along its body coordinates, conserving $80\%$ of its mass ($V_{\text{corpse}} = \frac{0.8 \times M}{K}$).
+### Requirement: REQ-PHYS-005 Food Absorption and Mass Growth
+Snakes SHALL absorb food pellets when head distance is within absorption radius, increasing mass and body segment length.
 
-### 3.2 Absorption Radius
-A food pellet at $(x_f, y_f)$ is absorbed by a snake head at $(x_h, y_h)$ when:
-$$\text{dist}(head, food) \le R_{\text{head}} + R_{\text{food}}$$
-Where $R_{\text{food}} = 6\text{ px}$.
+#### Scenario: Food consumption
+- **WHEN** snake head comes within absorption distance of a food pellet
+- **THEN** food is removed and snake mass increases accordingly
 
----
+### Requirement: REQ-PHYS-006 Pure-Contact Collision Resolution
+The physics engine SHALL detect collisions using spatial hash partitioning with pure-contact rules: no self-collision, head-to-body elimination, and head-to-head resolution based on mass superiority.
 
-## 4. Collision Resolution
+#### Scenario: Head to body elimination
+- **WHEN** snake A head contacts any body segment of snake B
+- **THEN** snake A is eliminated and converted to corpse food pellets
 
-### 4.1 Spatial Partitioning
-The arena is partitioned into a uniform Spatial Hash Grid of cell size $C = 100\text{ px}$ to reduce pairwise collision checks from $O(N^2)$ to $O(N)$.
-
-### 4.2 Head-to-Body Collision
-For every active snake $A$ with head position $H_A$:
-For every active snake $B$ (where $B \neq A$ or $B = A$ for segments index $\ge 6$):
-For every body segment $S_{B, i}$:
-$$\text{If } \|H_A - S_{B, i}\| < (R_{\text{head}}(M_A) + R_{\text{body}}(M_B)) \times 0.85 \implies \text{Snake } A \text{ dies immediately.}$$
-
-### 4.3 Head-to-Head Collision
-If head $H_A$ collides with head $H_B$:
-- If $M_A > M_B \times 1.1$, Snake $B$ dies and Snake $A$ survives.
-- If $M_B > M_A \times 1.1$, Snake $A$ dies and Snake $B$ survives.
-- Otherwise, both snakes die.
-
----
-
-## 5. Scenarios (GIVEN / WHEN / THEN)
-
-### Scenario: Snake Growth on Food Consumption
-- **GIVEN** a snake with mass $M = 10.0$ and head at $(100, 100)$
-- **WHEN** a food pellet of value $1.0$ is within distance $\le R_{\text{head}} + R_{\text{food}}$
-- **THEN** food is removed and snake mass increases to $11.0$, increasing body segment count.
-
-### Scenario: Snake Wall Collision Death
-- **GIVEN** a snake moving toward $x = 0$ with head radius $R = 15$
-- **WHEN** $x_{\text{head}} \le 15$
-- **THEN** the snake status transitions to `DEAD` and corpse pellets are spawned.
+#### Scenario: No self collision
+- **WHEN** a snake curves sharply and touches its own body segments
+- **THEN** no collision occurs and the snake remains alive
