@@ -125,7 +125,6 @@ export class HUDManager {
     el.className = 'hud-card stats-box';
     el.innerHTML = `
       <div class="stat-row"><span>SCORE:</span> <b id="stat-score">0</b></div>
-      <div class="stat-row"><span>MASS:</span> <b id="stat-mass">3.0</b></div>
       <div class="stat-row"><span>RANK:</span> <b id="stat-rank">#--</b></div>
     `;
     this._container.appendChild(el);
@@ -211,12 +210,10 @@ export class HUDManager {
     if (localPlayerId) {
       const localSnake = world.snakes.find((s) => s.id === localPlayerId);
       const scoreEl = document.getElementById('stat-score');
-      const massEl = document.getElementById('stat-mass');
       const rankEl = document.getElementById('stat-rank');
 
       if (localSnake) {
         if (scoreEl) scoreEl.textContent = localSnake.score.toLocaleString();
-        if (massEl) massEl.textContent = localSnake.mass.toFixed(1);
         const myRank = world.leaderboard.find((l) => l.id === localPlayerId);
         if (rankEl) rankEl.textContent = myRank ? `#${myRank.rank}` : '#--';
       }

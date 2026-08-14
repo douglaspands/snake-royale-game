@@ -342,17 +342,33 @@ input[type="text"]:focus {
   gap: 4px;
   font-size: 0.85rem;
   font-family: 'JetBrains Mono', monospace;
+  min-width: 130px;
+}
+
+.stat-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.stat-row span {
+  color: var(--text-secondary);
+  font-weight: 600;
+  font-size: 0.8rem;
 }
 
 .stat-row b {
   color: var(--accent-cyan);
+  font-weight: 700;
+  text-align: right;
 }
 
-/* Mobile Turbo Button */
+/* Mobile Turbo Button (repositioned above the bottom-right minimap) */
 .mobile-turbo-btn {
   position: absolute;
-  bottom: 30px;
-  right: 30px;
+  bottom: 160px;
+  right: 20px;
   width: 76px;
   height: 76px;
   border-radius: 50%;

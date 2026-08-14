@@ -149,11 +149,9 @@ describe('HUDManager UI Components', () => {
     hud.updateHUD(world, 'local-1');
 
     const scoreEl = document.getElementById('stat-score');
-    const massEl = document.getElementById('stat-mass');
     const rankEl = document.getElementById('stat-rank');
 
     expect(scoreEl?.textContent).toBe('355');
-    expect(massEl?.textContent).toBe('35.5');
     expect(rankEl?.textContent).toBe('#1');
 
     // Update with unknown player id

@@ -1,14 +1,14 @@
 # 🐍 Snake Battle Royale Multiplayer
 
 [![CI](https://github.com/douglas/snake-game/actions/workflows/ci.yml/badge.svg)](file:///.github/workflows/ci.yml)
-[![OpenSpec v1.3.0-COMBAT-POLISH](https://img.shields.io/badge/OpenSpec-v1.3.0--COMBAT--POLISH-00f0ff.svg)](file:///home/douglas/Workspace/claude/snake-game/openspec/)
+[![OpenSpec v1.4.0-HUD-LAYOUT](https://img.shields.io/badge/OpenSpec-v1.4.0--HUD--LAYOUT-00f0ff.svg)](file:///home/douglas/Workspace/claude/snake-game/openspec/)
 [![Python 3.12+](https://img.shields.io/badge/Python-3.12%2B-blue.svg)](file:///home/douglas/Workspace/claude/snake-game/pyproject.toml)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.110%2B-009688.svg)](file:///home/douglas/Workspace/claude/snake-game/server/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.4-blue.svg)](file:///home/douglas/Workspace/claude/snake-game/client/)
 [![Vite](https://img.shields.io/badge/Vite-5.2-purple.svg)](file:///home/douglas/Workspace/claude/snake-game/client/)
 [![Tests](https://img.shields.io/badge/Tests-100%25%20Passing-brightgreen.svg)](file:///home/douglas/Workspace/claude/snake-game/docs/TEST_HARNESS.md)
 
-Um jogo **Multiplayer Online em Tempo Real: Snake Battle Royale** (estilo *Slither.io / Curve Fever*), moderno, com **Reflex Engine (<16ms CSP)**, gesto universal **Double-Tap & Hold para Turbo**, **12+ Skins com Padrões Misturados**, **Interpolação Anti-Tremor**, **Física de Contato Puro sem Auto-Colisão** e **Diretrizes de Eficiência de Tokens**, construído sob **Spec-Driven Development (SDD)** no padrão **OpenSpec** e **Graph Engineering (DAG)**.
+Um jogo **Multiplayer Online em Tempo Real: Snake Battle Royale** (estilo *Slither.io / Curve Fever*), moderno, com **HUD Ergonômico de 3 Cantos**, **Reflex Engine (<16ms CSP)**, gesto universal **Double-Tap & Hold para Turbo**, **12+ Skins com Padrões Misturados**, **Interpolação Anti-Tremor**, **Física de Contato Puro sem Auto-Colisão** e **Diretrizes de Eficiência de Tokens**, construído sob **Spec-Driven Development (SDD)** no padrão **OpenSpec** e **Graph Engineering (DAG)**.
 
 ---
 
@@ -33,9 +33,12 @@ Abra seu navegador em: **[http://localhost:8000](http://localhost:8000)**
 
 ---
 
-## 🏎️ 2. Motor de Precisão & Novidades (v1.3.0-COMBAT-POLISH)
+## 🏎️ 2. Motor de Precisão & Novidades (v1.4.0-HUD-LAYOUT)
 
-### 📱 Gesto Universal de Turbo (Mobile & Tablet)
+### 📊 HUD Ergonômico Triádico (Desktop & Mobile)
+- **Quina Superior Direita:** Top 10 Ranking (`🏆 TOP VIPERS`) com destaque ciano para o jogador local.
+- **Quina Inferior Esquerda:** Telemetria vital compacta com 2 métricas essenciais (`SCORE` e `RANK`).
+- **Quina Inferior Direita:** Radar / Minimapa Canvas 2D em tempo real com mira interna e blips de adversários em magenta.
 - **Double-Tap & Hold:** Dê 2 toques rápidos na tela ou no joystick e segure o segundo toque para ativar o Turbo. Ao soltar o dedo, o turbo desliga instantaneamente.
 - **Tela 100% Desobstruída:** Removeu-se o botão fixo flutuante que ficava em cima do minimap no celular vertical ou sumia no tablet.
 

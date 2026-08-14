@@ -519,21 +519,31 @@ export class GameRenderer {
     world: InterpolatedWorld,
     localPlayerId: string | null,
     screenWidth: number,
-    _screenHeight: number
+    screenHeight: number
   ): void {
     const mapSize = Math.min(130, screenWidth * 0.22);
     const padding = 16;
     const mapX = screenWidth - mapSize - padding;
-    const mapY = padding;
+    const mapY = screenHeight - mapSize - padding;
 
-    // Minimap Background
-    ctx.fillStyle = 'rgba(10, 13, 20, 0.8)';
+    // Minimap Background & Glassmorphism Card
+    ctx.fillStyle = 'rgba(10, 13, 20, 0.85)';
     ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
-    ctx.lineWidth = 2;
+    ctx.lineWidth = 1.5;
 
     ctx.beginPath();
-    ctx.roundRect(mapX, mapY, mapSize, mapSize, 8);
+    ctx.roundRect(mapX, mapY, mapSize, mapSize, 10);
     ctx.fill();
+    ctx.stroke();
+
+    // Subtle radar crosshair grid lines
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.06)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(mapX + mapSize / 2, mapY + 4);
+    ctx.lineTo(mapX + mapSize / 2, mapY + mapSize - 4);
+    ctx.moveTo(mapX + 4, mapY + mapSize / 2);
+    ctx.lineTo(mapX + mapSize - 4, mapY + mapSize / 2);
     ctx.stroke();
 
     const scaleX = mapSize / this.arenaWidth;
@@ -546,10 +556,24 @@ export class GameRenderer {
       const smX = mapX + snake.head.x * scaleX;
       const smY = mapY + snake.head.y * scaleY;
 
-      ctx.fillStyle = isLocal ? '#00f0ff' : '#ff0055';
-      ctx.beginPath();
-      ctx.arc(smX, smY, isLocal ? 3.5 : 2.0, 0, Math.PI * 2);
-      ctx.fill();
+      if (isLocal) {
+        // Local player: Cyan with outer glow/pulse ring
+        ctx.fillStyle = 'rgba(0, 240, 255, 0.35)';
+        ctx.beginPath();
+        ctx.arc(smX, smY, 5.0, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = '#00f0ff';
+        ctx.beginPath();
+        ctx.arc(smX, smY, 3.2, 0, Math.PI * 2);
+        ctx.fill();
+      } else {
+        // Other players: Vibrant Magenta / Red dot
+        ctx.fillStyle = '#ff0055';
+        ctx.beginPath();
+        ctx.arc(smX, smY, 2.2, 0, Math.PI * 2);
+        ctx.fill();
+      }
     }
   }
 
