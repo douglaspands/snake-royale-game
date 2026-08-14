@@ -19,6 +19,7 @@ export class Camera {
   public viewportHeight: number = 600;
   public dpr: number = 1.0;
   public smoothing: number = 0.15; // LERP damping factor
+  public directLock: boolean = false;
 
   constructor(viewportWidth: number = 800, viewportHeight: number = 600, dpr: number = 1.0) {
     this.viewportWidth = viewportWidth;
@@ -36,17 +37,23 @@ export class Camera {
     this.dpr = dpr;
   }
 
-  public follow(targetX: number, targetY: number, snap: boolean = false): void {
+  public follow(targetX: number, targetY: number, snapOrDirect: boolean = false): void {
     this.targetX = targetX;
     this.targetY = targetY;
+    this.directLock = snapOrDirect;
 
-    if (snap) {
+    if (snapOrDirect) {
       this.x = targetX;
       this.y = targetY;
     }
   }
 
   public update(dt: number = 0.016): void {
+    if (this.directLock) {
+      this.x = this.targetX;
+      this.y = this.targetY;
+      return;
+    }
     // Smoothly interpolate towards target
     const factor = Math.min(1.0, this.smoothing * (dt / 0.016));
     this.x += (this.targetX - this.x) * factor;

@@ -13,6 +13,7 @@
 | [`SPEC-v1.0.0-VIPER-PHYSICS.md`](file:///home/douglas/Workspace/claude/snake-game/specs/SPEC-v1.0.0-VIPER-PHYSICS.md) | Physics & Rules Engine | 2D kinematic equations, turn rate clamping, spatial hash grid, segment physics and food dynamics. | [`openspec/specs/physics/spec.md`](file:///home/douglas/Workspace/claude/snake-game/openspec/specs/physics/spec.md) |
 | [`SPEC-v1.0.0-VIPER-LIFECYCLE.md`](file:///home/douglas/Workspace/claude/snake-game/specs/SPEC-v1.0.0-VIPER-LIFECYCLE.md) | State Machines | Player and Arena Finite State Machines (Lobby $\rightarrow$ Playing $\rightarrow$ Dead $\rightarrow$ Respawning). | [`openspec/specs/lifecycle/spec.md`](file:///home/douglas/Workspace/claude/snake-game/openspec/specs/lifecycle/spec.md) |
 | [`SPEC-v1.0.0-VIPER-HARNESS.md`](file:///home/douglas/Workspace/claude/snake-game/specs/SPEC-v1.0.0-VIPER-HARNESS.md) | Test Harness & Invariants | Deterministic testing, virtual clock stepping, sleep-free execution and schema validation. | [`openspec/specs/harness/spec.md`](file:///home/douglas/Workspace/claude/snake-game/openspec/specs/harness/spec.md) |
+| [`SPEC-v1.0.0-VIPER-RENDERING.md`](file:///home/douglas/Workspace/claude/snake-game/specs/SPEC-v1.0.0-VIPER-RENDERING.md) | Rendering & Anti-Jitter | Screen-Space projection, integer pixel alignment and camera local tracking stabilization. | [`openspec/specs/rendering/spec.md`](file:///home/douglas/Workspace/claude/snake-game/openspec/specs/rendering/spec.md) |
 
 ---
 

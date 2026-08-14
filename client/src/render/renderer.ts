@@ -88,7 +88,7 @@ export class GameRenderer {
     // Find local player snake for camera tracking
     const localSnake = localPlayerId ? world.snakes.find((s) => s.id === localPlayerId) : null;
     if (localSnake && localSnake.alive) {
-      this._camera.follow(localSnake.head.x, localSnake.head.y);
+      this._camera.follow(localSnake.head.x, localSnake.head.y, true);
     }
     this._camera.update();
 
@@ -101,7 +101,7 @@ export class GameRenderer {
     // 4. Draw Food Pellets
     this._drawFood(ctx, world.foods);
 
-    // 5. Draw Snakes (Draw other snakes first, local snake on top)
+    // 5. Draw Snakes Bodies (Draw other snakes first, local snake on top)
     const sortedSnakes = [...world.snakes].sort((a, b) => {
       if (a.id === localPlayerId) return 1;
       if (b.id === localPlayerId) return -1;
@@ -117,10 +117,13 @@ export class GameRenderer {
     // 6. Restore World Transform
     this._camera.restoreTransform(ctx);
 
-    // 7. Draw Minimap & Screen Overlays
+    // 7. Draw Screen-Space Stabilized Nameplates (REQ-REND-001 / REQ-REND-003)
+    this._drawNameplates(ctx, sortedSnakes, localPlayerId, width, height);
+
+    // 8. Draw Minimap & Screen Overlays
     this._drawMinimap(ctx, world, localPlayerId, width, height);
 
-    // 8. Draw Virtual Joystick if active on screen
+    // 9. Draw Virtual Joystick if active on screen
     if (joystickState && joystickState.active) {
       this._drawJoystick(ctx, joystickState);
     }
@@ -267,16 +270,66 @@ export class GameRenderer {
       ctx.arc(pupilX, pupilY, headRadius * 0.18, 0, Math.PI * 2);
       ctx.fill();
     }
+  }
 
-    // 5. Draw Nickname Label above head
-    ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 12px "Segoe UI", Inter, sans-serif';
+  private _drawNameplates(
+    ctx: CanvasRenderingContext2D,
+    snakes: InterpolatedSnake[],
+    localPlayerId: string | null,
+    screenWidth: number,
+    screenHeight: number
+  ): void {
+    ctx.font = 'bold 11px "Inter", -apple-system, sans-serif';
     ctx.textAlign = 'center';
-    ctx.textBaseline = 'bottom';
-    ctx.shadowColor = 'rgba(0, 0, 0, 0.8)';
-    ctx.shadowBlur = 4;
-    ctx.fillText(snake.nickname, snake.head.x, snake.head.y - headRadius - 6);
-    ctx.shadowBlur = 0;
+    ctx.textBaseline = 'middle';
+
+    for (const snake of snakes) {
+      if (!snake.alive) continue;
+
+      const isLocal = snake.id === localPlayerId;
+      const headRadius = 14 + 0.8 * Math.sqrt(Math.max(1, snake.mass));
+      const screenPos = this._camera.worldToScreen(snake.head.x, snake.head.y);
+
+      // Frustum culling in screen space
+      if (
+        screenPos.x < -100 ||
+        screenPos.x > screenWidth + 100 ||
+        screenPos.y < -100 ||
+        screenPos.y > screenHeight + 100
+      ) {
+        continue;
+      }
+
+      // Round to exact integer screen pixels to completely prevent font hinting jitter
+      const nx = Math.round(screenPos.x);
+      const ny = Math.round(screenPos.y - (headRadius + 14) * this._camera.zoom);
+
+      // Measure text for pill container
+      const textMetrics = ctx.measureText(snake.nickname);
+      const textW = Math.round(textMetrics.width || 40);
+      const pillW = textW + 16;
+      const pillH = 20;
+      const pillX = Math.round(nx - pillW / 2);
+      const pillY = Math.round(ny - pillH / 2);
+
+      // Draw Semi-transparent Pill Badge
+      ctx.fillStyle = isLocal ? 'rgba(10, 24, 40, 0.85)' : 'rgba(10, 15, 26, 0.75)';
+      ctx.strokeStyle = isLocal ? 'rgba(0, 240, 255, 0.8)' : 'rgba(255, 255, 255, 0.18)';
+      ctx.lineWidth = 1;
+
+      ctx.beginPath();
+      if (typeof ctx.roundRect === 'function') {
+        ctx.roundRect(pillX, pillY, pillW, pillH, 6);
+      } else {
+        ctx.rect(pillX, pillY, pillW, pillH);
+      }
+      ctx.fill();
+      ctx.stroke();
+
+      // Draw Crisp Stabilized Text
+      ctx.fillStyle = isLocal ? '#00f0ff' : '#ffffff';
+      ctx.fillText(snake.nickname, nx, ny);
+    }
   }
 
   private _drawMinimap(

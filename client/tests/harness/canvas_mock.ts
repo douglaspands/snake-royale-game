@@ -37,6 +37,14 @@ export class MockCanvasRenderingContext2D {
     this.record('strokeRect', x, y, w, h);
   }
 
+  rect(x: number, y: number, w: number, h: number): void {
+    this.record('rect', x, y, w, h);
+  }
+
+  roundRect(x: number, y: number, w: number, h: number, radii?: number | number[]): void {
+    this.record('roundRect', x, y, w, h, radii);
+  }
+
   beginPath(): void {
     this.record('beginPath');
   }
@@ -91,6 +99,11 @@ export class MockCanvasRenderingContext2D {
 
   strokeText(text: string, x: number, y: number, maxWidth?: number): void {
     this.record('strokeText', text, x, y, maxWidth);
+  }
+
+  measureText(text: string): { width: number } {
+    this.record('measureText', text);
+    return { width: text.length * 7 };
   }
 
   createRadialGradient(x0: number, y0: number, r0: number, x1: number, y1: number, r1: number): any {
