@@ -9,3 +9,4 @@
 - `REQ-HARN-004`: Frontend Canvas 2D and PointerEvent mock harness (`canvas_mock.ts`, `touch_simulator.ts`).
 - `REQ-HARN-005`: Sub-2.0s total test execution constraint.
 - `REQ-HARN-006`: Mandatory automated code coverage threshold of at least 80% on backend and frontend.
+- `REQ-HARN-007`: Mandatory 100% compliance with `ruff` and `ty` static analysis without diagnostics.

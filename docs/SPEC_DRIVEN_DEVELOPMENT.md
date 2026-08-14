@@ -31,7 +31,8 @@ openspec/
 │   ├── protocol/spec.md            # Esquemas JSON Schema e eventos WebSocket
 │   ├── physics/spec.md             # Fórmulas de movimento, turn rate, turbo e colisões
 │   ├── lifecycle/spec.md           # FSM do Jogador e da Arena
-│   └── harness/spec.md             # Invariantes e contratos do Test Harness
+│   ├── rendering/spec.md           # Screen-Space projection, integer pixel alignment e camera sync
+│   └── harness/spec.md             # Invariantes, Quality Gates (Coverage >= 80%, Ruff/Ty 100%)
 └── changes/                        # Pacotes de mudanças ativas
     └── v1.0.0-viper/
         ├── proposal.md             # Justificativa, objetivos e histórias de usuário

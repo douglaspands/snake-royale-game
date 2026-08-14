@@ -15,6 +15,7 @@ The Test Harness provides deterministic, non-blocking simulation environments fo
 3. **Execution Budget:** Entire test suite (Backend + Frontend) MUST complete in $< 2.0\text{ seconds}$.
 4. **Schema Conformance:** Every generated mock packet must be automatically validated against the JSON schemas in `protocol/spec.md`.
 5. **Code Coverage Gate (REQ-HARN-006):** Automated test suites MUST maintain a minimum of 80% line and statement coverage across both backend and frontend production source code. CI pipelines MUST fail if coverage falls below 80%.
+6. **Backend Static Quality Gate (REQ-HARN-007):** The entire Python codebase (`server/app/` and `server/tests/`) MUST maintain 100% compliance with `ruff check`, `ruff format --check`, and `ty check` with zero errors, zero warnings, and zero type diagnostics.
 
 ---
 

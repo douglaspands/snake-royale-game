@@ -11,3 +11,4 @@
 - **Sub-2s Execution Target:** Full test suite completes in $< 2.0\text{ seconds}$.
 - **Frontend Mocks:** Complete simulation of `CanvasRenderingContext2D`, `requestAnimationFrame`, and multi-touch `PointerEvents`.
 - **Minimum 80% Code Coverage Gate:** Automated tests must cover at least 80% of lines and statements across backend and frontend.
+- **Static Quality Invariant (REQ-HARN-007):** 100% adherence to `ruff check`, `ruff format --check`, and `ty check` with zero errors, zero warnings, and zero type diagnostics.
