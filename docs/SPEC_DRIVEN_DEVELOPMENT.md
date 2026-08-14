@@ -61,16 +61,14 @@ O projeto utiliza a CLI oficial do `@fission-ai/openspec`. Principais comandos i
 
 ---
 
-## 🤖 4. Integração Nativa com Assistentes de IA
+## 🤖 4. Integração Nativa com Google Antigravity (AGY)
 
-O projeto possui adaptadores de habilidades (**Skills**) e comandos (**Slash Commands**) configurados para todas as ferramentas de IA:
+O projeto possui adaptadores de habilidades (**Skills**) e comandos (**Workflows / Slash Commands**) configurados nativamente em [`.agent/`](file:///home/douglas/Workspace/claude/snake-game/.agent/):
 
-- **Antigravity / Gemini CLI:** `/opsx-propose`, `/opsx-apply`, `/opsx-sync`, `/opsx-archive`, `/opsx-explore`
-- **Claude Code:** `/opsx:propose`, `/opsx:apply`, `/opsx:sync`, `/opsx:archive`, `/opsx:explore`
-- **Cursor:** `/opsx-propose`, `/opsx-apply`, `/opsx-sync`, `/opsx-archive`, `/opsx-explore`
-- **GitHub Copilot:** Prompts e skills em `.github/prompts/` e `.github/skills/`
+- **Skills:** `openspec-propose`, `openspec-apply-change`, `openspec-update-change`, `openspec-sync-specs`, `openspec-archive-change`, `openspec-explore`.
+- **Workflows:** `/opsx-propose`, `/opsx-apply`, `/opsx-update`, `/opsx-sync`, `/opsx-archive`, `/opsx-explore`.
 
-### Ciclo de Vida de uma Mudança via IA:
+### Ciclo de Vida de uma Mudança via Antigravity:
 1. **/opsx-propose `<ideia>`**: Cria a proposta formal, estrutura de deltas e critérios de sucesso.
 2. **/opsx-apply `<id>`**: Executa a implementação orientada a testes seguindo o DAG de tarefas.
 3. **/opsx-sync**: Sincroniza e valida todas as especificações delta com o código.
@@ -81,7 +79,7 @@ O projeto possui adaptadores de habilidades (**Skills**) e comandos (**Slash Com
 ## ⚡ 5. Otimização de Custo de Tokens (Token Efficiency)
 
 Para otimizar o consumo de contexto dos modelos de linguagem e acelerar a resposta:
-1. **Filtros de Contexto Rigorosos:** Arquivos `.ignore`, `.antigravityignore` e `.cursorignore` impedem a ingestão de caches (`.pytest_cache`, `.ruff_cache`), bundles (`client/dist/`), coverage reports e lockfiles volumosos.
+1. **Filtros de Contexto Rigorosos:** Arquivos [`.antigravityignore`](file:///home/douglas/Workspace/claude/snake-game/.antigravityignore) e [`.ignore`](file:///home/douglas/Workspace/claude/snake-game/.ignore) impedem a ingestão de caches (`.pytest_cache`, `.ruff_cache`), bundles (`client/dist/`), coverage reports e lockfiles volumosos no Antigravity.
 2. **Modularidade de Código:** Arquivos de implementação mantidos intencionalmente compactos (<300 linhas) e altamente focados.
 3. **Compactação de Payload:** Serialização de rede e esquemas JSON otimizados com precisão flutuante controlada.
 
