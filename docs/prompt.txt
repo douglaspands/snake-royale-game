@@ -1,0 +1,136 @@
+# 🚀 PROMPT DE EXECUÇÃO: Snake Battle Royale Multiplayer (SDD + Graph Engineering)
+
+Você deve implementar do zero um jogo **Multiplayer Online em Tempo Real: Snake Battle Royale** (estilo Slither.io / Curve Fever), familiar e para todas as idades, acessível via navegador em qualquer dispositivo (PC, Celular Android, Tablet).
+
+O projeto DEVE seguir rigorosamente os princípios de **Spec-Driven Development (SDD)**, **Test Harness**, **Graph Engineering (DAG)**, **Git Best Practices** e incluir uma documentação didática e ilustrada.
+
+---
+
+## 🛠️ 1. STACK TECNOLÓGICA E REQUISITOS
+
+### A. Backend (Python)
+- **Gerenciador de Pacotes:** `uv` (rápido e moderno).
+- **Servidor Web & Real-Time:** `FastAPI` + `Uvicorn` + WebSockets assíncronos.
+- **Física & Regras (Server-Authoritative):** Game loop assíncrono a 30-40 Hz (cálculo de colisões, crescimento, mortes e ranking).
+- **Testes Unitários & Qualidade:** `pytest` + `pytest-asyncio` com 100% de aprovação.
+
+### B. Frontend (TypeScript + Canvas 2D)
+- **Ferramentas:** `Vite` + `TypeScript`.
+- **Renderização:** HTML5 Canvas 2D puro com `requestAnimationFrame` (60–120 FPS fluidos, sem peso de frameworks de UI).
+- **Responsividade & Telas Retina:** Ajuste dinâmico de `100vw`/`100vh` e compensação de DPI (`window.devicePixelRatio`).
+- **Controles Multiplataforma:**
+  - **PC:** Cursor do Mouse ou Teclado (Setas / WASD) + Barra de Espaço (Turbo).
+  - **Mobile / Tablet:** **Joystick Virtual Flutuante** sensível ao toque (`PointerEvents` / multi-touch) + Botão de Turbo.
+- **Interpolação:** LERP suave no cliente para sincronização sem travamentos.
+- **Testes Unitários do Frontend:** `vitest` com mocks de Canvas e simulador de toque.
+
+### C. Integração e Execução com 1 Comando
+- O backend FastAPI deve ser capaz de servir o frontend estático compilado (`client/dist`), permitindo subir todo o jogo com: `uv run uvicorn server.app.main:app --host 0.0.0.0 --port 8000`.
+
+---
+
+## 📜 2. SPEC-DRIVEN DEVELOPMENT (SDD) — ESPECIFICAÇÃO `v1.0.0-VIPER`
+
+Nenhum código de produção deve ser escrito antes das suas especificações formais. Crie a pasta `specs/` com arquivos em **Markdown (`.md`)** estruturados:
+
+1. `specs/SPEC-INDEX.md`: Índice de versões, changelog e alias ativo (`v1.0.0-VIPER`).
+2. `specs/SPEC-v1.0.0-VIPER-PROTOCOL.md`: Esquemas JSON Schema de todas as mensagens WebSocket (`Join`, `Input`, `WorldSnapshot`, `PlayerDeath`, `Leaderboard`).
+3. `specs/SPEC-v1.0.0-VIPER-PHYSICS.md`: Fórmulas matemáticas, velocidades base/turbo, raios de colisão, taxa de giro e arena ($Width \times Height$).
+4. `specs/SPEC-v1.0.0-VIPER-LIFECYCLE.md`: Máquina de Estados Finita (FSM) do Jogador e da Sala (`LOBBY` -> `PLAYING` -> `BOOSTING` -> `DEAD` -> `RESPAWN`).
+5. `specs/SPEC-v1.0.0-VIPER-HARNESS.md`: Requisitos e invariantes obrigatórios que o Test Harness deve validar.
+
+---
+
+## 🧪 3. TEST HARNESS DE ALTA PERFORMANCE
+
+Implemente o Test Harness tanto no Backend quanto no Frontend para garantir testes determinísticos, sem `sleep()` real e com execução em < 2 segundos:
+
+- **Backend Harness (`server/tests/harness/`):**
+  - `virtual_clock.py`: Avanço manual e determinístico de ticks (`engine.step(dt=0.033)`).
+  - `schema_validator.py`: Validação de payloads contra os esquemas da `SPEC-v1.0.0-VIPER-PROTOCOL.md`.
+  - `mock_client.py`: Simulação de múltiplos jogadores enviando inputs e recebendo deltas.
+  - `factories.py`: Criação rápida de cobras, comidas e cenários de colisão.
+- **Frontend Harness (`client/tests/harness/`):**
+  - `canvas_mock.ts`: Mock de `CanvasRenderingContext2D` e `requestAnimationFrame`.
+  - `touch_simulator.ts`: Emulador de eventos de toque para o Joystick Virtual.
+  - `packet_generator.ts`: Injeção de streams de pacotes de teste para o interpolador.
+
+---
+
+## 🕸️ 4. GRAPH ENGINEERING (DAG DE EXECUÇÃO PARALELA)
+
+Execute as tarefas seguindo o Grafo Acíclico Dirigido (DAG):
+
+```mermaid
+graph TD
+    N_ROOT["[Nó 0] Specs v1.0.0-VIPER (Markdown) + Git Setup (.gitignore & CI)"]
+    N_B1["[Nó B1] Backend Setup (uv) + Harness pytest"]
+    N_F1["[Nó F1] Frontend Setup (Vite+TS) + Harness Vitest"]
+    N_B2["[Nó B2] TDD Física, Colisões e Regras (pytest)"]
+    N_F2["[Nó F2] TDD Controles Touch / PC / Câmera (Vitest)"]
+    N_B3["[Nó B3] Game Loop 30Hz + WebSocket Server"]
+    N_F3["[Nó F3] Canvas 2D 60FPS + Interpolação LERP"]
+    N_INT["[Nó INT] Integração E2E + Servir Frontend no FastAPI"]
+    N_DOC["[Nó DOC] README.md Didático + Docs Harness + Screenshot"]
+
+    N_ROOT --> N_B1 --> N_B2 --> N_B3 --> N_INT
+    N_ROOT --> N_F1 --> N_F2 --> N_F3 --> N_INT
+    N_INT --> N_DOC
+```
+
+---
+
+## 📦 5. ESTRUTURA FINAL DO REPOSITÓRIO
+
+```text
+snake-royale/
+├── .github/
+│   └── workflows/
+│       └── ci.yml                   # CI automatizado (uv pytest + npm test)
+├── .gitignore
+├── pyproject.toml                   # Gerenciado pelo uv (Python 3.12+)
+├── README.md                        # Didático, passo a passo e com screenshot
+├── assets/
+│   └── game_preview.png             # Imagem ilustrativa da arena do jogo
+├── specs/                           # Especificações Markdown v1.0.0-VIPER
+│   ├── SPEC-INDEX.md
+│   ├── SPEC-v1.0.0-VIPER-PROTOCOL.md
+│   ├── SPEC-v1.0.0-VIPER-PHYSICS.md
+│   ├── SPEC-v1.0.0-VIPER-LIFECYCLE.md
+│   └── SPEC-v1.0.0-VIPER-HARNESS.md
+├── docs/
+│   ├── SPEC_DRIVEN_DEVELOPMENT.md
+│   └── TEST_HARNESS.md
+├── server/                          # Backend Python
+│   ├── app/
+│   │   ├── main.py
+│   │   ├── websocket_handler.py
+│   │   └── game/
+│   └── tests/
+│       ├── conftest.py
+│       ├── harness/
+│       └── test_*.py
+└── client/                          # Frontend TypeScript
+    ├── package.json
+    ├── vite.config.ts
+    ├── vitest.config.ts
+    ├── index.html
+    ├── src/
+    └── tests/
+        ├── harness/
+        └── *.test.ts
+```
+
+---
+
+## 🏁 6. ROTEIRO DE EXECUÇÃO PASSO A PASSO
+
+1. **Nó 0:** Criar repositório Git, `.gitignore`, `.github/workflows/ci.yml` e todas as especificações `specs/*.md` (`v1.0.0-VIPER`).
+2. **Nós B1, B2, B3 (Backend):** Inicializar com `uv`, criar o Harness com `pytest`, escrever testes de física/colisão/regras, e implementar a Engine + WebSockets.
+3. **Nós F1, F2, F3 (Frontend):** Inicializar com Vite + TypeScript, configurar Vitest com emuladores de toque/canvas, implementar o Joystick Virtual para celular/tablet, renderizador Canvas 2D e interpolação.
+4. **Nó INT (Integração):** Compilar o cliente e configurar o FastAPI para servir a interface estática.
+5. **Nó DOC (Documentação & Validação):**
+   - Gerar/salvar a imagem do jogo em `assets/game_preview.png`.
+   - Criar o `README.md` didático explicando: como rodar (1 comando e modo dev), como jogar no PC e Mobile, como rodar a suíte de testes (`uv run pytest` e `npm test`), e a visão geral da arquitetura.
+   - Criar `docs/TEST_HARNESS.md` e `docs/SPEC_DRIVEN_DEVELOPMENT.md`.
+   - Executar 100% dos testes para garantir que todas as suítes passam com sucesso.
