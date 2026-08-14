@@ -5,19 +5,29 @@ project:
   description: "Real-time Multiplayer Snake Battle Royale Game (SDD + Graph Engineering)"
 
 context: |
-  Real-time Multiplayer Snake Battle Royale Game (SDD + Graph Engineering).
-  Backend: Python 3.12+, uv, FastAPI, Uvicorn, WebSockets, pytest, 30-40 Hz Server-Authoritative.
-  Frontend: Vite, TypeScript, Canvas 2D (60-120 FPS), LERP, vitest.
-  Unified server: Single command distribution via uvicorn.
+  Real-time Multiplayer Snake Battle Royale Game built using Spec-Driven Development (SDD) and Graph Engineering.
+  Backend: Python 3.12+, uv package manager, FastAPI, Uvicorn, WebSockets, pytest, 30-40 Hz Server-Authoritative loop.
+  Frontend: Vite, TypeScript, HTML5 Canvas 2D (60-120 FPS), adaptive LERP interpolation with Client-Side Prediction (CSP), vitest.
+  Controls: Desktop (Mouse / WASD / Space boost), Mobile/Tablet (Dynamic Floating Virtual Joystick, Double-Tap & Hold Turbo).
+  Distribution: Single-command unified server running on port 8000.
 
 rules:
   proposals:
     - "Must specify clear problem statement, user stories, and measurable success criteria."
-    - "Must detail backward-compatibility and zero-sleep test harness constraints."
+    - "Must detail backward-compatibility, token efficiency impact, and zero-sleep test harness constraints."
   specs:
     - "Must use RFC 2119 keywords (MUST, SHALL, SHOULD, MAY) or EARS formatting."
     - "Must provide explicit JSON Schemas for all network packets."
     - "Must include GIVEN / WHEN / THEN behavioral scenarios for each requirement."
+    - "Must follow capability folder hierarchy under openspec/specs/<capability>/spec.md."
   tasks:
     - "Tasks must follow the Graph Engineering DAG topology (Nodes 0, B1-B3, F1-F3, INT, DOC)."
     - "No production code implementation before specification validation."
+  quality:
+    - "Minimum 80% automated code coverage required across both backend and frontend."
+    - "100% pass on ruff check, ruff format --check, and ty check (zero type errors/warnings)."
+    - "Zero real-time sleep in test suites (must use virtual clock stepping)."
+  token_efficiency:
+    - "Keep production modules modular and focused (<300 lines per file where possible)."
+    - "Filter all build outputs, lockfiles, coverage reports, and caches via .ignore, .antigravityignore, and .cursorignore."
+    - "Serialize network coordinates with 1-decimal floating point precision to minimize payload token count."

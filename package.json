@@ -1,0 +1,33 @@
+{
+  "name": "snake-battle-royale",
+  "version": "1.4.0",
+  "description": "Real-time Multiplayer Snake Battle Royale Game (Spec-Driven Development + Graph Engineering)",
+  "private": true,
+  "scripts": {
+    "start": "uv run uvicorn server.app.main:app --host 0.0.0.0 --port 8000",
+    "dev": "uv run uvicorn server.app.main:app --reload --host 0.0.0.0 --port 8000",
+    "build": "cd client && npm run build",
+    "test": "npm run test:backend && npm run test:frontend && npm run spec:validate",
+    "test:backend": "uv run pytest",
+    "test:frontend": "cd client && npm test",
+    "lint": "uv run ruff check server && uv run ruff format --check server && uv run ty check server",
+    "lint:fix": "uv run ruff check --fix server && uv run ruff format server",
+    "spec:validate": "openspec validate --specs --no-interactive",
+    "spec:doctor": "openspec doctor",
+    "spec:list": "openspec list",
+    "spec:view": "openspec view"
+  },
+  "keywords": [
+    "snake",
+    "battle-royale",
+    "multiplayer",
+    "websocket",
+    "fastapi",
+    "typescript",
+    "canvas-2d",
+    "openspec",
+    "sdd"
+  ],
+  "author": "Snake Royale Team",
+  "license": "MIT"
+}

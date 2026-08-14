@@ -27,6 +27,8 @@ cd client && npm install && npm run build && cd ..
 
 # 2. Executar o jogo completo com 1 comando
 uv run uvicorn server.app.main:app --host 0.0.0.0 --port 8000
+# ou simplesmente:
+npm start
 ```
 
 Abra seu navegador em: **[http://localhost:8000](http://localhost:8000)**
@@ -70,7 +72,7 @@ Para trabalhar com hot-reload no frontend e backend simultaneamente:
 
 ```bash
 # Terminal 1: Backend FastAPI com auto-reload
-uv run uvicorn server.app.main:app --reload --port 8000
+npm run dev
 
 # Terminal 2: Frontend Vite com HMR
 cd client && npm run dev
@@ -80,21 +82,20 @@ Acesse o cliente Vite em `http://localhost:3000` (conecta automaticamente ao bac
 
 ---
 
-## 🧪 5. Suíte de Testes & Test Harness (< 2s)
+## 🧪 5. Suíte de Testes, Quality Gates & OpenSpec CLI
 
 O projeto possui um **Test Harness Determinístico** com relógio virtual e zero bloqueios de tempo real (`sleep`):
 
 ```bash
+# Executar todos os testes e validação de especificações
+npm test
+
 # Linter PEP 8 e checagem estática de tipos do Backend
-uv run ruff check server
-uv run ruff format --check server
-uv run ty check server
+npm run lint
 
-# Executar testes do Backend (35 testes, cobertura >= 93% em ~0.4s)
-uv run pytest
-
-# Executar testes do Frontend (33 testes, cobertura >= 90% em ~0.4s)
-cd client && npm test
+# Validação e integridade de especificações OpenSpec
+npm run spec:validate
+npm run spec:doctor
 ```
 
 Para mais detalhes sobre a arquitetura dos testes, consulte: [`docs/TEST_HARNESS.md`](file:///home/douglas/Workspace/claude/snake-game/docs/TEST_HARNESS.md).
@@ -103,15 +104,23 @@ Para mais detalhes sobre a arquitetura dos testes, consulte: [`docs/TEST_HARNESS
 
 ## 📜 6. Spec-Driven Development (SDD) com OpenSpec
 
-Todas as funcionalidades foram formalmente especificadas antes da escrita do código de produção, seguindo o padrão **[OpenSpec](file:///home/douglas/Workspace/claude/snake-game/openspec/)**:
+Todas as funcionalidades são formalmente especificadas antes da escrita de código de produção, no padrão **[OpenSpec](file:///home/douglas/Workspace/claude/snake-game/openspec/)**:
 
 - [`openspec/config.yaml`](file:///home/douglas/Workspace/claude/snake-game/openspec/config.yaml): Configuração do ecossistema OpenSpec.
 - [`openspec/specs/protocol/spec.md`](file:///home/douglas/Workspace/claude/snake-game/openspec/specs/protocol/spec.md): JSON Schemas de todas as mensagens WebSocket.
 - [`openspec/specs/physics/spec.md`](file:///home/douglas/Workspace/claude/snake-game/openspec/specs/physics/spec.md): Equações de movimento, dinâmica $\omega(M)$ e colisões.
 - [`openspec/specs/lifecycle/spec.md`](file:///home/douglas/Workspace/claude/snake-game/openspec/specs/lifecycle/spec.md): Máquina de Estados Finita (FSM) do Jogador e da Sala.
+- [`openspec/specs/hud/spec.md`](file:///home/douglas/Workspace/claude/snake-game/openspec/specs/hud/spec.md): Layout ergonômico em 3 cantos, métricas vitais e radar.
+- [`openspec/specs/rendering/spec.md`](file:///home/douglas/Workspace/claude/snake-game/openspec/specs/rendering/spec.md): Screen-Space integer pixel alignment e skins.
 - [`openspec/specs/harness/spec.md`](file:///home/douglas/Workspace/claude/snake-game/openspec/specs/harness/spec.md): Invariantes do Test Harness determinístico.
-- [`docs/SPEC_DRIVEN_DEVELOPMENT.md`](file:///home/douglas/Workspace/claude/snake-game/docs/SPEC_DRIVEN_DEVELOPMENT.md): Guia prático da metodologia SDD.
+- [`docs/SPEC_DRIVEN_DEVELOPMENT.md`](file:///home/douglas/Workspace/claude/snake-game/docs/SPEC_DRIVEN_DEVELOPMENT.md): Guia prático da metodologia SDD e comandos OpenSpec.
 - [`docs/LATENCY_AND_COMMAND_TUNING.md`](file:///home/douglas/Workspace/claude/snake-game/docs/LATENCY_AND_COMMAND_TUNING.md): Guia do motor de baixa latência e CSP.
+
+### 🤖 Comandos Rápidos para Assistentes de IA (Slash Commands)
+- `/opsx-propose "descrição"`: Criar nova proposta de especificação.
+- `/opsx-apply "change-id"`: Implementar mudança orientada por TDD e DAG.
+- `/opsx-sync`: Sincronizar especificações com o código-fonte.
+- `/opsx-archive "change-id"`: Arquivar e promover especificação ratificada.
 
 ---
 

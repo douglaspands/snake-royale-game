@@ -7,8 +7,27 @@ on:
     branches: [ main, master ]
 
 jobs:
+  openspec-gate:
+    name: OpenSpec Validation Gate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install OpenSpec CLI
+        run: npm install -g @fission-ai/openspec@latest
+
+      - name: Run OpenSpec doctor & specification validation
+        run: |
+          openspec doctor
+          openspec validate --specs --no-interactive
+
   backend-test:
-    name: Backend Tests (pytest)
+    name: Backend Tests (pytest & linters)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

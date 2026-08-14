@@ -1,12 +1,18 @@
 # Antigravity / Gemini Workspace Token Filter
+# Prevents large generated/cache files from consuming LLM context tokens
 
 # Build artifacts & compiled bundles
 client/dist/**
 dist/**
+build/**
 *.bundle.js
+*.min.js
+*.min.css
+*.map
 
 # Dependencies & Environments
 .venv/**
+venv/**
 node_modules/**
 client/node_modules/**
 
@@ -15,8 +21,16 @@ client/node_modules/**
 .ruff_cache/**
 .coverage
 coverage/**
+htmlcov/**
 client/coverage/**
 
-# Large lock files and logs
+# Large lock files, logs, and transcripts
 *.log
 *.jsonl
+npm-debug.log*
+
+# OS & Temporary Files
+.DS_Store
+Thumbs.db
+*.tmp
+*.swp
