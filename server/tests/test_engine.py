@@ -51,8 +51,8 @@ def test_game_engine_head_to_body_collision():
     s_obs.target_angle = 0.0
     s_obs._init_body()
 
-    # Victim head is moving directly into obstacle's 5th body segment at (460, 500)
-    s_obs_seg = s_obs.get_body_segments()[4]  # around (460, 500)
+    # Victim head is moving directly into obstacle's body segment at (484, 500)
+    s_obs_seg = s_obs.get_body_segments()[1]  # around (484, 500)
     s_victim.head = Vector2D(s_obs_seg.x, s_obs_seg.y - 1.0)
     s_victim.angle = 1.5708  # moving down into obstacle body
     s_victim.target_angle = 1.5708

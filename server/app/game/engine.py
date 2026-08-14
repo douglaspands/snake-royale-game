@@ -84,7 +84,7 @@ class GameEngine:
             spawn_x=spawn_x,
             spawn_y=spawn_y,
             initial_angle=angle,
-            initial_mass=10.0,
+            initial_mass=3.0,
         )
         self.snakes[player_id] = snake
         session.snake = snake
@@ -106,7 +106,7 @@ class GameEngine:
             return
 
         session.last_input_seq = seq
-        session.snake.set_input(target_angle=angle, boost=boost)
+        session.snake.set_input(target_angle=angle, boost=boost, seq=seq)
         if session.snake.boost:
             session.transition_to(PlayerState.BOOSTING)
         else:
@@ -132,13 +132,13 @@ class GameEngine:
         for snake in list(self.snakes.values()):
             if not snake.alive:
                 continue
-            drop_pos = snake.step(dt)
-            if drop_pos:
-                boost_drops.append(drop_pos)
+            drops = snake.step(dt)
+            if drops:
+                boost_drops.extend(drops)
 
         # Spawn boost pellets
         for drop in boost_drops:
-            self.food_manager.spawn_boost_drop(drop)
+            self.food_manager.spawn_boost_drop(drop, val=1.0)
 
         # 2. Populate Spatial Hash Grid
         self.spatial_grid.clear()

@@ -63,13 +63,13 @@ class FoodManager:
                 fid = self._get_next_id()
                 self.foods[fid] = FoodPellet(fid, x, y, val=1.0, food_type="normal")
 
-    def spawn_boost_drop(self, pos: Vector2D) -> None:
-        """Spawns a boost drop pellet at position."""
+    def spawn_boost_drop(self, pos: Vector2D, val: float = 1.0) -> None:
+        """Spawns a boost drop pellet at position with equivalent value."""
         # Add slight jitter to drop location
         jx = pos.x + random.uniform(-4.0, 4.0)
         jy = pos.y + random.uniform(-4.0, 4.0)
         fid = self._get_next_id()
-        self.foods[fid] = FoodPellet(fid, jx, jy, val=1.2, food_type="boost_drop")
+        self.foods[fid] = FoodPellet(fid, jx, jy, val=val, food_type="boost_drop")
 
     def spawn_corpse_pellets(self, body_points: list[Vector2D], total_mass: float) -> None:
         """

@@ -129,4 +129,23 @@ describe('Virtual Joystick (Mobile Touch)', () => {
     joystick.handlePointerUp(2);
     expect(joystick.isBoost()).toBe(false);
   });
+
+  it('should trigger onInputChange callback instantly on significant angle or boost changes', () => {
+    const joystick = new VirtualJoystick(60.0);
+    let notifiedAngle: number | null = null;
+    let notifiedBoost: boolean | null = null;
+
+    joystick.onInputChange = (angle, boost) => {
+      notifiedAngle = angle;
+      notifiedBoost = boost;
+    };
+
+    joystick.handlePointerDown(1, 100, 100);
+    // Move significantly past deadzone
+    joystick.handlePointerMove(1, 150, 100); // moving right -> angle = 0
+    expect(notifiedAngle).toBeCloseTo(0.0, 2);
+
+    joystick.setBoost(true);
+    expect(notifiedBoost).toBe(true);
+  });
 });

@@ -1,6 +1,7 @@
 /**
  * Client Application Entry Point.
- * Coordinates input handling, WebSocket network stream, LERP interpolation, Canvas 2D rendering and HUD.
+ * Coordinates Instant Reflex input handling, Client-Side Prediction (CSP),
+ * Adaptive LERP interpolation, Canvas 2D rendering, and HUD UI.
  */
 
 import { Camera } from './render/camera';
@@ -8,6 +9,7 @@ import { GameRenderer } from './render/renderer';
 import { HUDManager } from './ui/hud';
 import { WebSocketClient, PlayerDeathPayload } from './net/ws_client';
 import { EntityInterpolator } from './net/interpolator';
+import { LocalPredictor } from './net/local_predictor';
 import { DesktopController } from './input/desktop_controller';
 import { VirtualJoystick } from './input/virtual_joystick';
 
@@ -18,13 +20,16 @@ class SnakeRoyaleApp {
   private _hud: HUDManager;
   private _wsClient: WebSocketClient;
   private _interpolator: EntityInterpolator;
+  private _localPredictor: LocalPredictor;
   private _desktopController: DesktopController;
   private _virtualJoystick: VirtualJoystick;
 
   private _isPlaying: boolean = false;
   private _localPlayerId: string | null = null;
   private _lastInputSendTime: number = 0;
-  private _inputSendIntervalMs: number = 33.33; // 30 Hz input streaming
+  private _lastFrameTimeMs: number = 0;
+  private _inputSendIntervalMs: number = 33.33; // 30 Hz steady heartbeat stream
+  private _inputSeq: number = 0;
 
   constructor() {
     this._canvas = document.getElementById('game-canvas') as HTMLCanvasElement;
@@ -33,6 +38,7 @@ class SnakeRoyaleApp {
     this._hud = new HUDManager();
     this._wsClient = new WebSocketClient();
     this._interpolator = new EntityInterpolator();
+    this._localPredictor = new LocalPredictor();
     this._desktopController = new DesktopController();
     this._virtualJoystick = new VirtualJoystick(65.0);
 
@@ -74,19 +80,58 @@ class SnakeRoyaleApp {
       this._renderer.arenaWidth = ack.arenaWidth;
       this._renderer.arenaHeight = ack.arenaHeight;
       this._isPlaying = true;
+      this._localPredictor.reset();
     };
 
     this._wsClient.onSnapshot = (snapshot) => {
-      this._interpolator.pushSnapshot(snapshot);
+      const now = performance.now();
+      this._interpolator.pushSnapshot(snapshot, now);
+
+      if (this._localPlayerId) {
+        const localServerSnake = snapshot.snakes.find((s) => s.id === this._localPlayerId);
+        if (localServerSnake) {
+          this._localPredictor.reconcileSnapshot(localServerSnake);
+        }
+      }
     };
 
     this._wsClient.onDeath = (death: PlayerDeathPayload) => {
       this._isPlaying = false;
+      this._localPredictor.alive = false;
       this._hud.showGameOver(death);
     };
   }
 
+  private _sendCurrentInput(): void {
+    if (!this._isPlaying || !this._wsClient.isConnected) {
+      return;
+    }
+
+    let angle = this._desktopController.getAngle();
+    let boost = this._desktopController.isBoost();
+
+    if (this._virtualJoystick.isActive()) {
+      angle = this._virtualJoystick.getAngle();
+    }
+    if (this._virtualJoystick.isBoost()) {
+      boost = true;
+    }
+
+    this._inputSeq++;
+    this._localPredictor.setInput(angle, boost, this._inputSeq);
+    this._wsClient.sendInput(angle, boost, this._inputSeq);
+  }
+
   private _setupInputListeners(): void {
+    // Instant Reflex Event Handlers (Dispatches on significant direction changes < 1ms)
+    this._desktopController.onInputChange = () => {
+      this._sendCurrentInput();
+    };
+
+    this._virtualJoystick.onInputChange = () => {
+      this._sendCurrentInput();
+    };
+
     // Touch & Pointer Events on Canvas for dynamic floating joystick
     this._canvas.addEventListener('pointerdown', (e: PointerEvent) => {
       // Exclude pointer if it originates from mobile turbo button
@@ -131,6 +176,7 @@ class SnakeRoyaleApp {
     };
 
     this._hud.onRespawnClick = () => {
+      this._localPredictor.reset();
       this._wsClient.sendRespawn();
       this._isPlaying = true;
     };
@@ -141,34 +187,36 @@ class SnakeRoyaleApp {
   }
 
   private _gameLoop(currentTimeMs: number): void {
-    // 1. Process and stream player input at 30-40 Hz
+    if (this._lastFrameTimeMs === 0) {
+      this._lastFrameTimeMs = currentTimeMs;
+    }
+    const dt = Math.min(0.1, Math.max(0.001, (currentTimeMs - this._lastFrameTimeMs) / 1000.0));
+    this._lastFrameTimeMs = currentTimeMs;
+
+    // 1. Process continuous input heartbeat (30-40 Hz)
     if (this._isPlaying && this._wsClient.isConnected) {
       if (currentTimeMs - this._lastInputSendTime >= this._inputSendIntervalMs) {
         this._lastInputSendTime = currentTimeMs;
-
-        let angle = this._desktopController.getAngle();
-        let boost = this._desktopController.isBoost();
-
-        // If mobile virtual joystick is active, it overrides desktop angle
-        if (this._virtualJoystick.isActive()) {
-          angle = this._virtualJoystick.getAngle();
-        }
-        if (this._virtualJoystick.isBoost()) {
-          boost = true;
-        }
-
-        this._wsClient.sendInput(angle, boost);
+        this._sendCurrentInput();
       }
+
+      // 2. Advance local kinematics predictor at display frame rate (60-120 FPS)
+      this._localPredictor.step(dt);
     }
 
-    // 2. Compute interpolated world state for smooth 60-120 FPS
+    // 3. Compute interpolated world state for remote entities
     const worldState = this._interpolator.getInterpolatedState(currentTimeMs);
 
-    // 3. Render Canvas 2D
+    // 4. Render Canvas 2D with zero-lag local predicted entity
     const joystickState = this._virtualJoystick.getRenderState();
-    this._renderer.render(worldState, this._localPlayerId, joystickState);
+    const localPredictedSnake =
+      this._isPlaying && this._localPredictor.isInitialized()
+        ? this._localPredictor.getPredictedSnake()
+        : null;
 
-    // 4. Update HUD
+    this._renderer.render(worldState, this._localPlayerId, joystickState, localPredictedSnake);
+
+    // 5. Update HUD
     if (worldState) {
       this._hud.updateHUD(worldState, this._localPlayerId);
     }

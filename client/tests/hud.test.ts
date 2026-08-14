@@ -186,6 +186,7 @@ describe('HUDManager UI Components', () => {
     // Simulate mobile boost pointer events
     const boostBtn = document.getElementById('mobile-boost-btn');
     if (boostBtn) {
+      boostBtn.classList.remove('disabled');
       boostBtn.dispatchEvent({ type: 'pointerdown', preventDefault: () => {} } as unknown as Event);
       expect(boostActive).toBe(true);
 
@@ -195,5 +196,70 @@ describe('HUDManager UI Components', () => {
       boostBtn.dispatchEvent({ type: 'pointercancel', preventDefault: () => {} } as unknown as Event);
       expect(boostActive).toBe(false);
     }
+  });
+
+  it('should toggle mobile boost button disabled class based on mass threshold (3.0)', () => {
+    const hud = new HUDManager(mockContainer);
+    const boostBtn = document.getElementById('mobile-boost-btn');
+
+    let boostTriggered = false;
+    hud.onMobileBoostChange = (active) => {
+      boostTriggered = active;
+    };
+
+    // Snake with mass 3.0 (spawn / minimum mass)
+    const lowMassWorld: InterpolatedWorld = {
+      tick: 1,
+      snakes: [
+        {
+          id: 'local-1',
+          nickname: 'SmallSnake',
+          skin: 'neon_blue',
+          head: { x: 500, y: 500, angle: 0 },
+          body: [],
+          mass: 3.0,
+          alive: true,
+          score: 30,
+          boost: false,
+        },
+      ],
+      foods: [],
+      leaderboard: [],
+    };
+
+    hud.updateHUD(lowMassWorld, 'local-1');
+    expect(boostBtn?.classList.contains('disabled')).toBe(true);
+
+    // Attempt pointerdown while disabled
+    boostTriggered = false;
+    boostBtn?.dispatchEvent({ type: 'pointerdown', preventDefault: () => {} } as unknown as Event);
+    expect(boostTriggered).toBe(false);
+
+    // Snake with mass 4.5 (eaten pellets, above threshold)
+    const grownWorld: InterpolatedWorld = {
+      tick: 2,
+      snakes: [
+        {
+          id: 'local-1',
+          nickname: 'SmallSnake',
+          skin: 'neon_blue',
+          head: { x: 500, y: 500, angle: 0 },
+          body: [],
+          mass: 4.5,
+          alive: true,
+          score: 45,
+          boost: false,
+        },
+      ],
+      foods: [],
+      leaderboard: [],
+    };
+
+    hud.updateHUD(grownWorld, 'local-1');
+    expect(boostBtn?.classList.contains('disabled')).toBe(false);
+
+    // Pointerdown while enabled
+    boostBtn?.dispatchEvent({ type: 'pointerdown', preventDefault: () => {} } as unknown as Event);
+    expect(boostTriggered).toBe(true);
   });
 });

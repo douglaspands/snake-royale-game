@@ -1,6 +1,7 @@
 /**
  * Dynamic Floating Virtual Joystick for Mobile & Tablet touchscreens.
  * Uses PointerEvents to support seamless multi-touch (movement + dedicated boost button).
+ * Includes micro-deadzone filtering and instant event-driven dispatch.
  */
 
 export interface JoystickRenderState {
@@ -20,10 +21,15 @@ export class VirtualJoystick {
   private _knobX: number = 0;
   private _knobY: number = 0;
   private _angle: number = 0;
+  private _prevNotifiedAngle: number = 0;
   private _radius: number = 60.0; // max knob travel radius
+  public deadzone: number = 4.0; // 4px circular deadzone to filter finger tremble
 
   private _boostActive: boolean = false;
   private _boostPointerId: number | null = null;
+
+  public onInputChange?: (angle: number, boost: boolean) => void;
+  public angleThreshold: number = 0.015;
 
   constructor(radius: number = 60.0) {
     this._radius = radius;
@@ -33,6 +39,7 @@ export class VirtualJoystick {
     if (isBoostZone) {
       this._boostActive = true;
       this._boostPointerId = pointerId;
+      this._notifyChange(true);
       return true;
     }
 
@@ -55,11 +62,12 @@ export class VirtualJoystick {
       const dy = y - this._baseY;
       const dist = Math.hypot(dx, dy);
 
-      if (dist > 0.001) {
+      if (dist > this.deadzone) {
         this._angle = Math.atan2(dy, dx);
         const clampedDist = Math.min(dist, this._radius);
         this._knobX = this._baseX + Math.cos(this._angle) * clampedDist;
         this._knobY = this._baseY + Math.sin(this._angle) * clampedDist;
+        this._notifyChange(false);
       } else {
         this._knobX = this._baseX;
         this._knobY = this._baseY;
@@ -78,6 +86,17 @@ export class VirtualJoystick {
     if (this._boostActive && this._boostPointerId === pointerId) {
       this._boostActive = false;
       this._boostPointerId = null;
+      this._notifyChange(true);
+    }
+  }
+
+  private _notifyChange(force: boolean = false): void {
+    const angleDiff = Math.abs(this._angle - this._prevNotifiedAngle);
+    if (force || angleDiff >= this.angleThreshold) {
+      this._prevNotifiedAngle = this._angle;
+      if (this.onInputChange) {
+        this.onInputChange(this._angle, this._boostActive);
+      }
     }
   }
 
@@ -94,7 +113,11 @@ export class VirtualJoystick {
   }
 
   public setBoost(boost: boolean): void {
+    const changed = this._boostActive !== boost;
     this._boostActive = boost;
+    if (changed) {
+      this._notifyChange(true);
+    }
   }
 
   public getRenderState(): JoystickRenderState {

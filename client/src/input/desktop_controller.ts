@@ -1,13 +1,18 @@
 /**
  * Desktop Controller handling Mouse and Keyboard (WASD/Arrows + Space Turbo).
+ * Supports Instant Reflex Event Dispatching (<1ms response on heading change).
  */
 
 export class DesktopController {
   private _angle: number = 0.0;
+  private _prevNotifiedAngle: number = 0.0;
   private _boost: boolean = false;
   private _keysDown: Set<string> = new Set();
   private _useKeyboard: boolean = false;
   private _targetElement: HTMLElement | Window | null = null;
+
+  public onInputChange?: (angle: number, boost: boolean) => void;
+  public angleThreshold: number = 0.015; // ~0.86 degrees threshold for instant mouse dispatch
 
   constructor(target?: HTMLElement | Window | null) {
     this._targetElement = target ?? (typeof window !== 'undefined' ? window : null);
@@ -25,6 +30,7 @@ export class DesktopController {
         this._boost = true;
       }
       this._updateKeyboardAngle();
+      this._notifyChange(true);
     });
 
     window.addEventListener('keyup', (e: KeyboardEvent) => {
@@ -33,6 +39,7 @@ export class DesktopController {
         this._boost = false;
       }
       this._updateKeyboardAngle();
+      this._notifyChange(true);
     });
 
     window.addEventListener('mousemove', (e: MouseEvent) => {
@@ -40,18 +47,21 @@ export class DesktopController {
         const cx = window.innerWidth / 2;
         const cy = window.innerHeight / 2;
         this._angle = Math.atan2(e.clientY - cy, e.clientX - cx);
+        this._notifyChange(false);
       }
     });
 
     window.addEventListener('mousedown', (e: MouseEvent) => {
       if (e.button === 0) { // Left click = turbo
         this._boost = true;
+        this._notifyChange(true);
       }
     });
 
     window.addEventListener('mouseup', (e: MouseEvent) => {
       if (e.button === 0) {
         this._boost = false;
+        this._notifyChange(true);
       }
     });
   }
@@ -59,6 +69,17 @@ export class DesktopController {
   public setMousePosition(screenX: number, screenY: number, centerX: number, centerY: number): void {
     this._useKeyboard = false;
     this._angle = Math.atan2(screenY - centerY, screenX - centerX);
+    this._notifyChange(false);
+  }
+
+  private _notifyChange(force: boolean = false): void {
+    const angleDiff = Math.abs(this._angle - this._prevNotifiedAngle);
+    if (force || angleDiff >= this.angleThreshold) {
+      this._prevNotifiedAngle = this._angle;
+      if (this.onInputChange) {
+        this.onInputChange(this._angle, this._boost);
+      }
+    }
   }
 
   private _updateKeyboardAngle(): void {
@@ -85,6 +106,10 @@ export class DesktopController {
   }
 
   public setBoost(boost: boolean): void {
+    const changed = this._boost !== boost;
     this._boost = boost;
+    if (changed) {
+      this._notifyChange(true);
+    }
   }
 }

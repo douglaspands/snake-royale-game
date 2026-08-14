@@ -14,6 +14,7 @@ from fastapi.staticfiles import StaticFiles
 
 from server.app.game.engine import GameEngine
 from server.app.game.loop import GameLoop
+from server.app.network_utils import log_startup_banner
 from server.app.websocket_handler import ConnectionManager
 
 # Initialize global engine and connection manager
@@ -24,8 +25,9 @@ game_loop = GameLoop(engine=engine, connection_manager=connection_manager, tick_
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Startup: Start background game loop
+    # Startup: Start background game loop & print LAN IP banner
     await game_loop.start()
+    log_startup_banner(port=8000)
     yield
     # Shutdown: Stop game loop cleanly
     await game_loop.stop()

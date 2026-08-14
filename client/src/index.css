@@ -348,6 +348,16 @@ input[type="text"]:focus {
   background: linear-gradient(135deg, rgba(255, 0, 127, 1), rgba(255, 85, 0, 1));
 }
 
+.mobile-turbo-btn.disabled {
+  opacity: 0.35;
+  filter: grayscale(0.85);
+  box-shadow: none;
+  border-color: rgba(255, 255, 255, 0.2);
+  cursor: not-allowed;
+  pointer-events: none;
+  transform: none !important;
+}
+
 @media (min-width: 900px) {
   .mobile-turbo-btn {
     display: none; /* Hidden on large desktop screens */

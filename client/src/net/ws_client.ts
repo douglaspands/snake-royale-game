@@ -97,9 +97,13 @@ export class WebSocketClient {
     }
   }
 
-  public sendInput(angle: number, boost: boolean): void {
+  public sendInput(angle: number, boost: boolean, seq?: number): void {
     if (this._ws && this.isConnected) {
-      this._seq++;
+      if (typeof seq === 'number') {
+        this._seq = seq;
+      } else {
+        this._seq++;
+      }
       this._ws.send(JSON.stringify({ type: 'INPUT', angle, boost, seq: this._seq }));
     }
   }

@@ -11,11 +11,12 @@ from server.app.game.math2d import Vector2D, step_angle
 class Snake:
     BASE_SPEED: float = 180.0  # px/s
     BOOST_SPEED: float = 360.0  # px/s
-    TURN_RATE: float = 4.5  # rad/s
-    MIN_BOOST_MASS: float = 15.0
+    BASE_TURN_RATE: float = 9.8  # rad/s for spawn mass (high agile reflex)
+    MIN_TURN_RATE: float = 5.2  # rad/s for giant mass
+    MIN_BOOST_MASS: float = 3.0
     BOOST_MASS_DRAIN: float = 4.0  # mass/s
     BASE_SEGMENT_SPACING: float = 8.0  # px between segments
-    BASE_SEGMENT_COUNT: int = 10
+    BASE_SEGMENT_COUNT: int = 3
 
     def __init__(
         self,
@@ -25,7 +26,7 @@ class Snake:
         spawn_x: float = 500.0,
         spawn_y: float = 500.0,
         initial_angle: float = 0.0,
-        initial_mass: float = 10.0,
+        initial_mass: float = 3.0,
     ):
         self.id = player_id
         self.nickname = nickname
@@ -37,8 +38,10 @@ class Snake:
         self.alive = True
         self.score = int(self.mass * 10)
         self.boost = False
+        self.last_input_seq: int = 0
         self.killer_id: str | None = None
         self.killer_name: str | None = None
+        self._mass_drop_accumulator: float = 0.0
 
         # Trajectory point history for precise segment following
         self.trajectory: list[Vector2D] = []
@@ -59,7 +62,15 @@ class Snake:
     @property
     def target_segment_count(self) -> int:
         """Calculates total segment count based on current mass."""
-        return self.BASE_SEGMENT_COUNT + int(self.mass * 1.5)
+        return self.BASE_SEGMENT_COUNT + int(max(0.0, self.mass - self.MIN_BOOST_MASS) * 1.5)
+
+    @property
+    def turn_rate(self) -> float:
+        """Dynamic mass-scaled angular turn rate w(M) in rad/s."""
+        mass_excess = max(0.0, self.mass - self.MIN_BOOST_MASS)
+        return self.MIN_TURN_RATE + (self.BASE_TURN_RATE - self.MIN_TURN_RATE) / (
+            1.0 + 0.015 * mass_excess
+        )
 
     @property
     def head_radius(self) -> float:
@@ -74,38 +85,48 @@ class Snake:
     @property
     def speed(self) -> float:
         """Current velocity magnitude."""
-        if self.boost and self.mass >= self.MIN_BOOST_MASS:
+        if self.boost and self.mass > self.MIN_BOOST_MASS:
             return self.BOOST_SPEED
         return self.BASE_SPEED
 
-    def set_input(self, target_angle: float, boost: bool) -> None:
-        """Updates desired heading angle and turbo state."""
+    def set_input(self, target_angle: float, boost: bool, seq: int = 0) -> None:
+        """Updates desired heading angle, turbo state, and sequence number."""
         self.target_angle = target_angle
-        self.boost = boost and (self.mass >= self.MIN_BOOST_MASS)
+        self.boost = boost and (self.mass > self.MIN_BOOST_MASS)
+        if seq > self.last_input_seq:
+            self.last_input_seq = seq
 
-    def step(self, dt: float) -> Vector2D | None:
+    def step(self, dt: float) -> list[Vector2D]:
         """
         Advances the snake's physics by dt seconds.
-        Returns a boost pellet drop location if mass was shed, or None.
+        Returns a list of boost pellet drop locations if mass was shed, or an empty list.
         """
         if not self.alive:
-            return None
+            return []
 
-        # 1. Turn towards target angle
-        max_turn = self.TURN_RATE * dt
+        # 1. Turn towards target angle with dynamic agility w(M)
+        max_turn = self.turn_rate * dt
         self.angle = step_angle(self.angle, self.target_angle, max_turn)
 
-        # 2. Boost mass drain
-        dropped_pellet_pos: Vector2D | None = None
-        if self.boost and self.mass >= self.MIN_BOOST_MASS:
-            mass_lost = self.BOOST_MASS_DRAIN * dt
-            self.mass = max(self.MIN_BOOST_MASS - 0.1, self.mass - mass_lost)
-            if self.mass < self.MIN_BOOST_MASS:
+        # 2. Boost mass drain & 1:1 piece conservation
+        dropped_pellets: list[Vector2D] = []
+        if self.boost and self.mass > self.MIN_BOOST_MASS:
+            actual_mass_before = self.mass
+            mass_lost_target = self.BOOST_MASS_DRAIN * dt
+            self.mass = max(self.MIN_BOOST_MASS, self.mass - mass_lost_target)
+            actual_mass_lost = actual_mass_before - self.mass
+
+            if self.mass <= self.MIN_BOOST_MASS:
                 self.boost = False
-            # Drop pellet at tail if body exists
-            if len(self.trajectory) > 2:
-                tail = self.trajectory[-1]
-                dropped_pellet_pos = Vector2D(tail.x, tail.y)
+
+            self._mass_drop_accumulator += actual_mass_lost
+
+            # Release 1 pellet for every 1.0 mass unit shed
+            while self._mass_drop_accumulator >= 1.0:
+                self._mass_drop_accumulator -= 1.0
+                if len(self.trajectory) > 2:
+                    tail = self.trajectory[-1]
+                    dropped_pellets.append(Vector2D(tail.x, tail.y))
 
         # 3. Advance head
         dist = self.speed * dt
@@ -118,7 +139,7 @@ class Snake:
         # 5. Update score
         self.score = max(self.score, int(self.mass * 10))
 
-        return dropped_pellet_pos
+        return dropped_pellets
 
     def _update_trajectory(self) -> None:
         """Updates segment positions maintaining fixed spacing D_segment."""

@@ -38,4 +38,21 @@ describe('Entity Interpolator', () => {
     expect(state).not.toBeNull();
     expect(state!.tick).toBe(1);
   });
+
+  it('should dynamically adapt interpolation delay based on snapshot arrival deltas', () => {
+    const interpolator = new EntityInterpolator();
+    expect(interpolator.interpolationDelayMs).toBe(40.0);
+
+    // Simulate 5 snapshots arriving every 33ms
+    let time = 1000;
+    for (let i = 0; i < 5; i++) {
+      time += 33.3;
+      const snap = PacketGenerator.createSnapshot(i + 1, time);
+      interpolator.pushSnapshot(snap, time);
+    }
+
+    // Delay should remain low and tight (between 35ms and 50ms)
+    expect(interpolator.interpolationDelayMs).toBeGreaterThanOrEqual(35.0);
+    expect(interpolator.interpolationDelayMs).toBeLessThanOrEqual(55.0);
+  });
 });

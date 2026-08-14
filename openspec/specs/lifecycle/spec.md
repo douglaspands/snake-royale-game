@@ -1,6 +1,6 @@
 # OpenSpec: Player & Arena Lifecycle Specification
 **Domain:** `lifecycle`  
-**Version:** `1.0.0-VIPER`  
+**Version:** `1.2.0-MICRO-SNAKE`  
 **Status:** `ACTIVE`  
 
 ---
@@ -10,13 +10,13 @@
 ```mermaid
 stateDiagram-v2
     [*] --> LOBBY : WebSocket Connected
-    LOBBY --> PLAYING : Send JOIN payload & Validated
-    PLAYING --> BOOSTING : Input(boost=true) AND Mass >= 15
-    BOOSTING --> PLAYING : Input(boost=false) OR Mass < 15
+    LOBBY --> PLAYING : Send JOIN payload & Validated (Spawn Size 3, M=3.0)
+    PLAYING --> BOOSTING : Input(boost=true) AND Mass > 3.0
+    BOOSTING --> PLAYING : Input(boost=false) OR Mass <= 3.0
     PLAYING --> DEAD : Wall Collision OR Body Collision
     BOOSTING --> DEAD : Wall Collision OR Body Collision
     DEAD --> RESPAWNING : Send RESPAWN_REQUEST
-    RESPAWNING --> PLAYING : Spawn Snake at safe coordinates
+    RESPAWNING --> PLAYING : Spawn Snake at safe coordinates (Size 3, M=3.0)
     DEAD --> [*] : Disconnect
     PLAYING --> [*] : Disconnect
     BOOSTING --> [*] : Disconnect
@@ -28,7 +28,7 @@ stateDiagram-v2
 | :--- | :--- | :--- |
 | `LOBBY` | Client is connected to WebSocket but has not joined the match. | Client can send `JOIN`. No snake entity in the physics world. |
 | `PLAYING` | Snake is actively navigating the arena at base speed ($v_{\text{base}}$). | Receives inputs (`angle`, `boost`), consumes food, collides with walls/bodies. |
-| `BOOSTING` | Snake travels at $v_{\text{turbo}}$, shedding mass and spawning boost pellets. | Mass is decremented per tick. Auto-transitions to `PLAYING` if mass drops below 15. |
+| `BOOSTING` | Snake travels at $v_{\text{turbo}}$, shedding mass and spawning boost pellets. | Mass is decremented per tick. Auto-transitions to `PLAYING` if mass drops to 3.0 (minimum size 3). |
 | `DEAD` | Snake was eliminated. | Snake body is converted to corpse pellets. Receives `PLAYER_DEATH` packet. Allowed to send `RESPAWN_REQUEST`. |
 | `RESPAWNING` | Transition state where safe spawn coordinates are computed. | Ensures newly spawned snake does not instantly collide with existing snakes. Transitions to `PLAYING`. |
 

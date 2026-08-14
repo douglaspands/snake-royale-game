@@ -71,7 +71,8 @@ export class GameRenderer {
   public render(
     world: InterpolatedWorld | null,
     localPlayerId: string | null,
-    joystickState?: JoystickRenderState
+    joystickState?: JoystickRenderState,
+    localPredictedSnake?: InterpolatedSnake | null
   ): void {
     const ctx = this._ctx;
     const width = this._canvas.width / this._camera.dpr;
@@ -85,8 +86,11 @@ export class GameRenderer {
       return;
     }
 
-    // Find local player snake for camera tracking
-    const localSnake = localPlayerId ? world.snakes.find((s) => s.id === localPlayerId) : null;
+    // Prioritize local predicted snake for zero-lag camera tracking and rendering
+    const localSnake =
+      (localPredictedSnake && localPredictedSnake.alive ? localPredictedSnake : null) ??
+      (localPlayerId ? world.snakes.find((s) => s.id === localPlayerId) : null);
+
     if (localSnake && localSnake.alive) {
       this._camera.follow(localSnake.head.x, localSnake.head.y, true);
     }
@@ -102,7 +106,10 @@ export class GameRenderer {
     this._drawFood(ctx, world.foods);
 
     // 5. Draw Snakes Bodies (Draw other snakes first, local snake on top)
-    const sortedSnakes = [...world.snakes].sort((a, b) => {
+    const remoteSnakes = world.snakes.filter((s) => s.id !== localPlayerId);
+    const allSnakes = localSnake && localSnake.alive ? [...remoteSnakes, localSnake] : remoteSnakes;
+
+    const sortedSnakes = allSnakes.sort((a, b) => {
       if (a.id === localPlayerId) return 1;
       if (b.id === localPlayerId) return -1;
       return a.mass - b.mass;

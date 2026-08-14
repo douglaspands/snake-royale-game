@@ -1,6 +1,6 @@
 # OpenSpec: Game Physics & Rules Engine Specification
 **Domain:** `physics`  
-**Version:** `1.0.0-VIPER`  
+**Version:** `1.2.0-MICRO-SNAKE`  
 **Status:** `ACTIVE`  
 
 ---
@@ -17,19 +17,24 @@
 ### 2.1 Velocity & Acceleration
 - **Base Speed:** $v_{\text{base}} = 180\text{ px/s}$ (at 30 Hz, $\Delta s = 6.0\text{ px/tick}$).
 - **Boost Speed:** $v_{\text{turbo}} = 360\text{ px/s}$ (at 30 Hz, $\Delta s = 12.0\text{ px/tick}$).
-- **Minimum Mass to Boost:** $M_{\text{min\_boost}} = 15$.
-- **Boost Mass Drain:** When boosting, mass is drained at $\Delta M = 4.0\text{ mass/s}$ ($\approx 0.133\text{ mass/tick}$). Ejected mass spawns glowing boost pellets behind the tail.
+- **Minimum Mass to Boost:** $M > 3.0$ (blocked at spawn/minimum size $M \le 3.0$).
+- **Boost Mass Drain:** When boosting, mass is drained at $\Delta M = 4.0\text{ mass/s}$ ($\approx 0.133\text{ mass/tick}$) down to $M = 3.0$ with auto-cutoff. Ejected mass spawns glowing boost pellets behind the tail conserving mass 1:1 ($\sum \text{pellet.val} = \Delta M_{\text{lost}}$).
 
-### 2.2 Turn Rate
-The snake cannot snap instantly to a target angle; angular velocity is clamped by turn rate $\omega$:
-$$\Delta \theta = \text{clamp}\left(\text{normalize\_angle}(\theta_{\text{target}} - \theta_{\text{current}}), -\omega \cdot \Delta t, +\omega \cdot \Delta t\right)$$
-Where $\omega = 4.5\text{ rad/s}$ ($257.8^\circ/\text{s}$).
+### 2.2 Dynamic Agile Turn Rate $\omega(M)$
+The snake's turning agility is dynamically governed as a function of mass $M$:
+$$\omega(M) = \omega_{\text{min}} + \frac{\omega_{\text{base}} - \omega_{\text{min}}}{1 + 0.015 \cdot \max(0, M - 3.0)}$$
+Where:
+- $\omega_{\text{base}} = 9.8\text{ rad/s}$ ($561.5^\circ/\text{s}$ at spawn mass $M = 3.0$).
+- $\omega_{\text{min}} = 5.2\text{ rad/s}$ ($298.0^\circ/\text{s}$ for giant snakes).
+
+Angular step per tick of duration $\Delta t$:
+$$\Delta \theta = \text{clamp}\left(\text{normalize\_angle}(\theta_{\text{target}} - \theta_{\text{current}}), -\omega(M) \cdot \Delta t, +\omega(M) \cdot \Delta t\right)$$
 
 ### 2.3 Segment Physics & Length
 - **Head Radius:** $R_{\text{head}}(M) = 14 + \sqrt{M} \times 0.8\text{ px}$.
 - **Body Radius:** $R_{\text{body}}(M) = 12 + \sqrt{M} \times 0.7\text{ px}$.
 - **Segment Spacing:** Fixed distance $D_{\text{segment}} = 8\text{ px}$ between consecutive recorded trajectory points.
-- **Total Body Length:** $L(M) = 10 + \lfloor M \times 1.5 \rfloor$ segments.
+- **Total Body Length:** $L(M) = 3 + \lfloor \max(0, M - 3.0) \times 1.5 \rfloor$ segments.
 - Segment follow mechanics follow inverse kinematics (each segment moves toward the previous segment preserving distance $D_{\text{segment}}$).
 
 ---
@@ -38,7 +43,7 @@ Where $\omega = 4.5\text{ rad/s}$ ($257.8^\circ/\text{s}$).
 
 ### 3.1 Pellet Types
 1. **Ambient Food:** Randomly distributed across the arena. Value $V_{\text{ambient}} = 1.0\text{ mass}$. Spawn target density: 600 active pellets in the arena.
-2. **Boost Drop Pellets:** Ejected behind boosting snakes. Value $V_{\text{boost}} = 1.2\text{ mass}$.
+2. **Boost Drop Pellets:** Ejected behind boosting snakes with 1:1 mass conservation. Value $V_{\text{boost}} = 1.0\text{ mass}$.
 3. **Corpse Food Pellets:** When a snake of mass $M$ dies, it drops $K = \min(50, \lfloor L \times 0.7 \rfloor)$ food pellets along its body coordinates, conserving $80\%$ of its mass ($V_{\text{corpse}} = \frac{0.8 \times M}{K}$).
 
 ### 3.2 Absorption Radius

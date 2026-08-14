@@ -62,7 +62,7 @@ export class HUDManager {
         <button id="play-btn" class="primary-btn">ENTER ARENA</button>
 
         <div class="controls-hint">
-          <span>🖥️ <b>PC:</b> Mouse / WASD + Space (Turbo)</span>
+          <span>🖥️ <b>PC:</b> Mouse / WASD + Space (Turbo > 3.0 Mass)</span>
           <span>📱 <b>Mobile:</b> Drag Joystick + Tap Turbo</span>
         </div>
       </div>
@@ -110,7 +110,7 @@ export class HUDManager {
     el.className = 'hud-card stats-box';
     el.innerHTML = `
       <div class="stat-row"><span>SCORE:</span> <b id="stat-score">0</b></div>
-      <div class="stat-row"><span>MASS:</span> <b id="stat-mass">10.0</b></div>
+      <div class="stat-row"><span>MASS:</span> <b id="stat-mass">3.0</b></div>
       <div class="stat-row"><span>RANK:</span> <b id="stat-rank">#--</b></div>
     `;
     this._container.appendChild(el);
@@ -120,7 +120,7 @@ export class HUDManager {
   private _createMobileBoostBtn(): HTMLElement {
     const el = document.createElement('div');
     el.id = 'mobile-boost-btn';
-    el.className = 'mobile-turbo-btn';
+    el.className = 'mobile-turbo-btn disabled';
     el.innerHTML = `<span>⚡<br>TURBO</span>`;
     this._container.appendChild(el);
     return el;
@@ -158,6 +158,7 @@ export class HUDManager {
     // Mobile Boost button PointerEvents
     this._mobileBoostBtn.addEventListener('pointerdown', (e) => {
       e.preventDefault();
+      if (this._mobileBoostBtn.classList.contains('disabled')) return;
       if (this.onMobileBoostChange) this.onMobileBoostChange(true);
     });
 
@@ -227,6 +228,15 @@ export class HUDManager {
         if (massEl) massEl.textContent = localSnake.mass.toFixed(1);
         const myRank = world.leaderboard.find((l) => l.id === localPlayerId);
         if (rankEl) rankEl.textContent = myRank ? `#${myRank.rank}` : '#--';
+
+        // Update mobile boost button disabled state
+        if (this._mobileBoostBtn) {
+          if (localSnake.mass <= 3.0) {
+            this._mobileBoostBtn.classList.add('disabled');
+          } else {
+            this._mobileBoostBtn.classList.remove('disabled');
+          }
+        }
       }
     }
   }
