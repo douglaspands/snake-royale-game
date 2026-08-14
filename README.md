@@ -1,14 +1,14 @@
 # 🐍 Snake Battle Royale Multiplayer
 
 [![CI](https://github.com/douglas/snake-game/actions/workflows/ci.yml/badge.svg)](file:///.github/workflows/ci.yml)
-[![OpenSpec v1.2.0-MICRO-SNAKE](https://img.shields.io/badge/OpenSpec-v1.2.0--MICRO--SNAKE-00f0ff.svg)](file:///home/douglas/Workspace/claude/snake-game/openspec/)
+[![OpenSpec v1.3.0-COMBAT-POLISH](https://img.shields.io/badge/OpenSpec-v1.3.0--COMBAT--POLISH-00f0ff.svg)](file:///home/douglas/Workspace/claude/snake-game/openspec/)
 [![Python 3.12+](https://img.shields.io/badge/Python-3.12%2B-blue.svg)](file:///home/douglas/Workspace/claude/snake-game/pyproject.toml)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.110%2B-009688.svg)](file:///home/douglas/Workspace/claude/snake-game/server/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.4-blue.svg)](file:///home/douglas/Workspace/claude/snake-game/client/)
 [![Vite](https://img.shields.io/badge/Vite-5.2-purple.svg)](file:///home/douglas/Workspace/claude/snake-game/client/)
 [![Tests](https://img.shields.io/badge/Tests-100%25%20Passing-brightgreen.svg)](file:///home/douglas/Workspace/claude/snake-game/docs/TEST_HARNESS.md)
 
-Um jogo **Multiplayer Online em Tempo Real: Snake Battle Royale** (estilo *Slither.io / Curve Fever*), moderno, com **Reflex Engine (<16ms CSP)**, mecânica de **Cobrinha Inicial Compacta (Tamanho 3)** com **Dreno de Turbo 1:1 e Corte Automático**, construído com **Spec-Driven Development (SDD)** no padrão **OpenSpec** e **Graph Engineering (DAG)**.
+Um jogo **Multiplayer Online em Tempo Real: Snake Battle Royale** (estilo *Slither.io / Curve Fever*), moderno, com **Reflex Engine (<16ms CSP)**, gesto universal **Double-Tap & Hold para Turbo**, **12+ Skins com Padrões Misturados**, **Interpolação Anti-Tremor**, **Física de Contato Puro sem Auto-Colisão** e **Diretrizes de Eficiência de Tokens**, construído sob **Spec-Driven Development (SDD)** no padrão **OpenSpec** e **Graph Engineering (DAG)**.
 
 ---
 
@@ -33,22 +33,22 @@ Abra seu navegador em: **[http://localhost:8000](http://localhost:8000)**
 
 ---
 
-## 🏎️ 2. Motor de Precisão & Mecânicas de Jogo
+## 🏎️ 2. Motor de Precisão & Novidades (v1.3.0-COMBAT-POLISH)
 
-### 🎯 Mecânica de Spawn e Turbo Balanceado (v1.2.0-MICRO-SNAKE)
-- **Cobrinha Inicial Compacta:** Ao nascer ou renascer, a cobrinha começa com tamanho mínimo de **3 segmentos** ($M = 3.0$).
-- **Bloqueio de Turbo no Tamanho Mínimo:** No tamanho inicial / mínimo ($M \le 3.0$), o Turbo fica travado para evitar abusos na arena.
-- **Consumo de Massa 1:1 por Turbo:** Ao coletar comida ($M > 3.0$), o Turbo ($360\text{ px/s}$) drena a massa a $4.0\text{ massa/s}$, soltando exatamente **1 pedaço (boost pellet)** para cada $1.0$ de massa perdida.
-- **Corte Automático:** Ao atingir o tamanho 3 ($M = 3.0$), o Turbo desliga automaticamente e retorna à velocidade base ($180\text{ px/s}$).
+### 📱 Gesto Universal de Turbo (Mobile & Tablet)
+- **Double-Tap & Hold:** Dê 2 toques rápidos na tela ou no joystick e segure o segundo toque para ativar o Turbo. Ao soltar o dedo, o turbo desliga instantaneamente.
+- **Tela 100% Desobstruída:** Removeu-se o botão fixo flutuante que ficava em cima do minimap no celular vertical ou sumia no tablet.
 
-### ⚡ Reflex Engine (<16ms Latência Percebida)
-- **Client-Side Prediction (CSP):** A cobra do jogador local move-se instantaneamente no primeiro frame visual ($<16\text{ms}$).
-- **Instant Event-Driven Dispatch:** Mudanças no teclado (`WASD`) ou ângulo do mouse/joystick ($\Delta \theta \ge 0.015\text{ rad}$) são enviadas via WebSocket imediatamente.
-- **Dinâmica de Curva Ágil $\omega(M)$:** Velocidade angular de base de $9.8\text{ rad/s}$ ($561.5^\circ/\text{s}$), permitindo curvas de $90^\circ$ em apenas $160\text{ms}$.
-- **Reconciliação Exponencial Anti-Snap:** Desvios com o servidor são absorvidos suavemente sem saltos na tela.
-- **Buffer de Interpolação Adaptativo:** Cobras de oponentes utilizam buffer dinâmico de $35-45\text{ms}$.
+### 🎨 12+ Skins Vibrantes com Cores Misturadas (10+ Jogadores)
+- Suporte para mais de 10 jogadores na mesma arena com ampla variedade visual: `Neon Cyan`, `Cyber Magenta`, `Toxic Lime`, `Solar Flare`, `Hyper Rainbow`, `Galaxy Void`, `Sunset Vapor`, `Lava Magma`, `Ice Frost`, `Toxic Hazard`, `Bubblegum` e `Matrix Code`.
+- Segmentos bicolores alternados, gradientes cósmicos, listras de alerta e ciclo dinâmico arco-íris.
 
-Para mais detalhes matemáticos e de arquitetura, consulte: [`docs/LATENCY_AND_COMMAND_TUNING.md`](file:///home/douglas/Workspace/claude/snake-game/docs/LATENCY_AND_COMMAND_TUNING.md).
+### 🎯 Física de Contato Puro (Zero Mortes Fantasmas)
+- **Sem Auto-Colisão:** A cobra nunca morre ao encostar em seu próprio corpo em curvas fechadas.
+- **Contato Físico Rigoroso:** Eliminações ocorrem estritamente na sobreposição real entre a cabeça e segmentos de cobras adversárias ou a borda da arena, com partículas de explosão no ponto exato do impacto.
+
+### 🧈 Movimento Fluido sem Tremor (Anti-Jitter)
+- Sincronização de relógio baseada em timestamp local de chegada no cliente, garantindo LERP contínuo a 60–120 FPS nas cobras inimigas.
 
 ---
 
@@ -56,8 +56,8 @@ Para mais detalhes matemáticos e de arquitetura, consulte: [`docs/LATENCY_AND_C
 
 | Plataforma | Direção & Movimento | Turbo / Aceleração |
 | :--- | :--- | :--- |
-| **PC (Desktop)** | **Cursor do Mouse** (aponta e segue) ou **Teclas WASD / Setas** | **Barra de Espaço** ou **Clique Esquerdo** (com $M > 3.0$) |
-| **Mobile / Tablet** | **Joystick Virtual Flutuante** (com filtro de deadzone de 4px) | **Botão Turbo Dedicado** (ativo quando $M > 3.0$) |
+| **PC (Desktop)** | **Cursor do Mouse** (aponta e segue) ou **Teclas WASD / Setas** | **Barra de Espaço** ou **Clique Esquerdo Segurado** (com $M > 3.0$) |
+| **Mobile / Tablet** | **Toque e Arraste** em qualquer ponto da tela | **Double-Tap & Hold** (2 toques segurando o 2º) ou **Toque com 2º Dedo** |
 
 ---
 

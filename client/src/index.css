@@ -137,16 +137,28 @@ input[type="text"]:focus {
 
 .skin-selector {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(auto-fill, minmax(135px, 1fr));
   gap: 8px;
+  max-height: 175px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.skin-selector::-webkit-scrollbar {
+  width: 6px;
+}
+
+.skin-selector::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 3px;
 }
 
 .skin-opt {
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 8px 12px;
-  background: rgba(255, 255, 255, 0.04);
+  padding: 8px 10px;
+  background: rgba(255, 255, 255, 0.05);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-md);
   color: var(--text-primary);
@@ -154,21 +166,33 @@ input[type="text"]:focus {
   font-weight: 700;
   cursor: pointer;
   transition: all 0.2s ease;
+  overflow: hidden;
 }
 
 .skin-opt:hover {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(0, 240, 255, 0.4);
 }
 
 .skin-opt.active {
   border-color: var(--accent-cyan);
-  background: rgba(0, 240, 255, 0.15);
+  background: rgba(0, 240, 255, 0.18);
+  box-shadow: 0 0 12px rgba(0, 240, 255, 0.25);
 }
 
 .skin-swatch {
-  width: 14px;
-  height: 14px;
+  width: 16px;
+  height: 16px;
   border-radius: 50%;
+  flex-shrink: 0;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+}
+
+.skin-label {
+  font-size: 0.75rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .primary-btn {

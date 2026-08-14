@@ -185,25 +185,23 @@ class GameEngine:
             search_r = snake.head_radius + 40.0
             nearby_segments = self.spatial_grid.query_nearby_segments(snake.head, search_r)
             for seg_ref in nearby_segments:
-                # If self segment, ignore first 6 segments
-                if seg_ref.snake_id == snake.id and seg_ref.segment_idx <= 6:
+                # Pure-Contact rule: snakes NEVER collide with their own body segments
+                if seg_ref.snake_id == snake.id:
                     continue
 
                 other_snake = self.snakes.get(seg_ref.snake_id)
-                if not other_snake:
+                if not other_snake or not other_snake.alive:
                     continue
 
                 # Defer neck segment collision to head-to-head resolution
-                if (
-                    seg_ref.snake_id != snake.id
-                    and seg_ref.segment_idx <= 2
-                    and snake.head.distance_to(other_snake.head)
-                    <= (snake.head_radius + other_snake.head_radius) * 1.1
+                if seg_ref.segment_idx <= 2 and snake.head.distance_to(other_snake.head) <= (
+                    snake.head_radius + other_snake.head_radius
                 ):
                     continue
 
                 d = snake.head.distance_to(seg_ref.pos)
-                threshold = (snake.head_radius + other_snake.body_radius) * 0.85
+                # Strict physical contact hitbox
+                threshold = (snake.head_radius + other_snake.body_radius) - 2.0
                 if d < threshold:
                     dead_this_tick[snake.id] = (other_snake.id, other_snake.nickname)
                     break
@@ -218,7 +216,7 @@ class GameEngine:
                 if s2.id in dead_this_tick:
                     continue
                 d = s1.head.distance_to(s2.head)
-                if d < (s1.head_radius + s2.head_radius) * 0.85:
+                if d < (s1.head_radius + s2.head_radius) - 2.0:
                     # Resolve winner based on mass
                     if s1.mass > s2.mass * 1.1:
                         dead_this_tick[s2.id] = (s1.id, s1.nickname)

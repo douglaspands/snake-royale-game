@@ -1,0 +1,22 @@
+# Antigravity / Gemini Workspace Token Filter
+
+# Build artifacts & compiled bundles
+client/dist/**
+dist/**
+*.bundle.js
+
+# Dependencies & Environments
+.venv/**
+node_modules/**
+client/node_modules/**
+
+# Testing and Linters caches
+.pytest_cache/**
+.ruff_cache/**
+.coverage
+coverage/**
+client/coverage/**
+
+# Large lock files and logs
+*.log
+*.jsonl

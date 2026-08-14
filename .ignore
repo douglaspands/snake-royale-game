@@ -1,0 +1,35 @@
+# Ripgrep / AI Search & Ingestion Ignore File (Token Efficiency Optimization)
+
+# Build & Bundles
+client/dist/
+dist/
+build/
+*.min.js
+*.min.css
+*.map
+
+# Virtual Environments & Dependencies
+.venv/
+venv/
+node_modules/
+client/node_modules/
+
+# Test & Coverage Caches
+.coverage
+.pytest_cache/
+.ruff_cache/
+htmlcov/
+coverage/
+client/coverage/
+
+# Logs & Transcripts
+*.log
+*.jsonl
+npm-debug.log*
+
+# OS & Temporary Files
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*.tmp

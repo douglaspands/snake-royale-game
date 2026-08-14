@@ -88,7 +88,7 @@ describe('Desktop Controller', () => {
   });
 });
 
-describe('Virtual Joystick (Mobile Touch)', () => {
+describe('Virtual Joystick (Mobile Touch & Double-Tap Gesture)', () => {
   it('should activate on pointer down and clamp knob within radius', () => {
     const joystick = new VirtualJoystick(60.0);
     expect(joystick.isActive()).toBe(false);
@@ -109,25 +109,38 @@ describe('Virtual Joystick (Mobile Touch)', () => {
     expect(joystick.isActive()).toBe(false);
   });
 
-  it('should support multi-touch turbo button independently', () => {
+  it('should support double-tap & hold gesture for turbo boost', () => {
+    const joystick = new VirtualJoystick(60.0);
+
+    // 1st Tap
+    joystick.handlePointerDown(1, 100, 300);
+    expect(joystick.isBoost()).toBe(false);
+    joystick.handlePointerUp(1);
+
+    // 2nd Tap within window -> Turbo triggers
+    joystick.handlePointerDown(1, 100, 300);
+    expect(joystick.isBoost()).toBe(true);
+
+    // Release 2nd tap -> Turbo stops
+    joystick.handlePointerUp(1);
+    expect(joystick.isBoost()).toBe(false);
+  });
+
+  it('should support multi-touch secondary finger turbo boost', () => {
     const joystick = new VirtualJoystick(60.0);
     // Pointer 1: Joystick movement
     joystick.handlePointerDown(1, 100, 300, false);
     expect(joystick.isActive()).toBe(true);
     expect(joystick.isBoost()).toBe(false);
 
-    // Pointer 2: Turbo button touch
-    joystick.handlePointerDown(2, 700, 300, true);
+    // Pointer 2: Secondary finger anywhere on screen
+    joystick.handlePointerDown(2, 700, 300, false);
     expect(joystick.isBoost()).toBe(true);
 
-    // Release joystick while keeping turbo active
-    joystick.handlePointerUp(1);
-    expect(joystick.isActive()).toBe(false);
-    expect(joystick.isBoost()).toBe(true);
-
-    // Release turbo
+    // Release secondary finger
     joystick.handlePointerUp(2);
     expect(joystick.isBoost()).toBe(false);
+    expect(joystick.isActive()).toBe(true);
   });
 
   it('should trigger onInputChange callback instantly on significant angle or boost changes', () => {

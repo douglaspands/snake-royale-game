@@ -1,5 +1,5 @@
 /**
- * HUD & UI Overlay Manager (Lobby, Leaderboard, Score/Mass, Game Over, Mobile Boost).
+ * HUD & UI Overlay Manager (Lobby, Leaderboard, Score/Mass, Game Over, Skin Selection).
  */
 
 import { InterpolatedWorld } from '../net/interpolator';
@@ -10,13 +10,11 @@ export class HUDManager {
   private _container: HTMLElement;
   private _lobbyEl: HTMLElement;
   private _gameOverEl: HTMLElement;
-  private _mobileBoostBtn: HTMLElement;
 
   public onPlayClick: ((nickname: string, skin: string) => void) | null = null;
   public onRespawnClick: (() => void) | null = null;
-  public onMobileBoostChange: ((active: boolean) => void) | null = null;
 
-  private _selectedSkin: string = 'neon_blue';
+  private _selectedSkin: string = 'neon_cyan';
 
   constructor(container: HTMLElement = document.body) {
     this._container = container;
@@ -24,7 +22,6 @@ export class HUDManager {
     this._gameOverEl = document.getElementById('game-over-modal') || this._createGameOver();
     this._createLeaderboard();
     this._createStats();
-    this._mobileBoostBtn = document.getElementById('mobile-boost-btn') || this._createMobileBoostBtn();
 
     this._bindEvents();
   }
@@ -33,10 +30,27 @@ export class HUDManager {
     const el = document.createElement('div');
     el.id = 'lobby-overlay';
     el.className = 'ui-overlay';
+    
+    // Unique list of skins excluding legacy duplicate keys
+    const skinKeys = [
+      'neon_cyan',
+      'cyber_magenta',
+      'toxic_lime',
+      'solar_flare',
+      'hyper_rainbow',
+      'galaxy_void',
+      'sunset_vapor',
+      'lava_magma',
+      'ice_frost',
+      'toxic_hazard',
+      'bubblegum',
+      'matrix_code',
+    ];
+
     el.innerHTML = `
       <div class="lobby-card">
         <h1 class="game-title">🐍 Snake Royale</h1>
-        <p class="subtitle">Multiplayer Battle Royale Arena</p>
+        <p class="subtitle">Multiplayer Battle Royale Arena (10+ Players)</p>
         
         <div class="form-group">
           <label for="nickname-input">Choose Nickname</label>
@@ -44,17 +58,18 @@ export class HUDManager {
         </div>
 
         <div class="form-group">
-          <label>Select Skin</label>
+          <label>Select Skin (${skinKeys.length} Mixed & Patterned Styles)</label>
           <div class="skin-selector" id="skin-selector">
-            ${Object.keys(SKINS)
-              .map(
-                (k) => `
-              <button class="skin-opt ${k === 'neon_blue' ? 'active' : ''}" data-skin="${k}">
-                <span class="skin-swatch" style="background: ${SKINS[k].head}"></span>
-                ${k.replace('_', ' ').toUpperCase()}
+            ${skinKeys
+              .map((k) => {
+                const s = SKINS[k] || SKINS.neon_cyan;
+                return `
+              <button class="skin-opt ${k === 'neon_cyan' ? 'active' : ''}" data-skin="${k}" title="${s.name}">
+                <span class="skin-swatch" style="background: linear-gradient(135deg, ${s.bodyStart} 0%, ${s.bodyEnd} 100%); box-shadow: 0 0 6px ${s.glow}"></span>
+                <span class="skin-label">${s.name}</span>
               </button>
-            `
-              )
+            `;
+              })
               .join('')}
           </div>
         </div>
@@ -62,8 +77,8 @@ export class HUDManager {
         <button id="play-btn" class="primary-btn">ENTER ARENA</button>
 
         <div class="controls-hint">
-          <span>🖥️ <b>PC:</b> Mouse / WASD + Space (Turbo > 3.0 Mass)</span>
-          <span>📱 <b>Mobile:</b> Drag Joystick + Tap Turbo</span>
+          <span>🖥️ <b>PC:</b> Mouse / WASD + Space / Left-Click (Turbo > 3.0 Mass)</span>
+          <span>📱 <b>Mobile / Tablet:</b> Drag + Double-Tap & Hold (Turbo)</span>
         </div>
       </div>
     `;
@@ -117,15 +132,6 @@ export class HUDManager {
     return el;
   }
 
-  private _createMobileBoostBtn(): HTMLElement {
-    const el = document.createElement('div');
-    el.id = 'mobile-boost-btn';
-    el.className = 'mobile-turbo-btn disabled';
-    el.innerHTML = `<span>⚡<br>TURBO</span>`;
-    this._container.appendChild(el);
-    return el;
-  }
-
   private _bindEvents(): void {
     const playBtn = document.getElementById('play-btn');
     const nickInput = document.getElementById('nickname-input') as HTMLInputElement;
@@ -136,7 +142,7 @@ export class HUDManager {
       btn.addEventListener('click', () => {
         skinButtons.forEach((b) => b.classList.remove('active'));
         btn.classList.add('active');
-        this._selectedSkin = (btn as HTMLElement).dataset.skin || 'neon_blue';
+        this._selectedSkin = (btn as HTMLElement).dataset.skin || 'neon_cyan';
       });
     });
 
@@ -154,21 +160,6 @@ export class HUDManager {
         if (this.onRespawnClick) this.onRespawnClick();
       });
     }
-
-    // Mobile Boost button PointerEvents
-    this._mobileBoostBtn.addEventListener('pointerdown', (e) => {
-      e.preventDefault();
-      if (this._mobileBoostBtn.classList.contains('disabled')) return;
-      if (this.onMobileBoostChange) this.onMobileBoostChange(true);
-    });
-
-    const endBoost = (e: Event) => {
-      e.preventDefault();
-      if (this.onMobileBoostChange) this.onMobileBoostChange(false);
-    };
-
-    this._mobileBoostBtn.addEventListener('pointerup', endBoost);
-    this._mobileBoostBtn.addEventListener('pointercancel', endBoost);
   }
 
   public showLobby(): void {
@@ -228,15 +219,6 @@ export class HUDManager {
         if (massEl) massEl.textContent = localSnake.mass.toFixed(1);
         const myRank = world.leaderboard.find((l) => l.id === localPlayerId);
         if (rankEl) rankEl.textContent = myRank ? `#${myRank.rank}` : '#--';
-
-        // Update mobile boost button disabled state
-        if (this._mobileBoostBtn) {
-          if (localSnake.mass <= 3.0) {
-            this._mobileBoostBtn.classList.add('disabled');
-          } else {
-            this._mobileBoostBtn.classList.remove('disabled');
-          }
-        }
       }
     }
   }

@@ -1,5 +1,5 @@
 /**
- * Comprehensive unit tests for HUDManager UI overlays, leaderboard, stats, modals, and mobile boost button.
+ * Comprehensive unit tests for HUDManager UI overlays, leaderboard, stats, modals, and skin selector.
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';
@@ -49,9 +49,9 @@ describe('HUDManager UI Components', () => {
   beforeEach(() => {
     elementMap = new Map();
     skinButtons = [
-      Object.assign(new MockHTMLElement(), { dataset: { skin: 'classic' } }),
-      Object.assign(new MockHTMLElement(), { dataset: { skin: 'neon_blue' } }),
-      Object.assign(new MockHTMLElement(), { dataset: { skin: 'cyber_pink' } }),
+      Object.assign(new MockHTMLElement(), { dataset: { skin: 'neon_cyan' } }),
+      Object.assign(new MockHTMLElement(), { dataset: { skin: 'cyber_magenta' } }),
+      Object.assign(new MockHTMLElement(), { dataset: { skin: 'hyper_rainbow' } }),
     ];
 
     const mockDoc = {
@@ -80,7 +80,7 @@ describe('HUDManager UI Components', () => {
     mockContainer = new MockHTMLElement();
   });
 
-  it('should initialize and create lobby, game over, stats, leaderboard, and turbo button', () => {
+  it('should initialize and create lobby, game over, stats, leaderboard, and skins', () => {
     const hud = new HUDManager(mockContainer);
     expect(hud).toBeDefined();
 
@@ -110,10 +110,15 @@ describe('HUDManager UI Components', () => {
     const hud = new HUDManager(mockContainer);
     expect(hud).toBeDefined();
 
-    // Click on cyber_pink skin
+    // Click on cyber_magenta skin
+    skinButtons[1].dispatchEvent({ type: 'click' });
+    expect(skinButtons[1].classList.contains('active')).toBe(true);
+    expect(skinButtons[0].classList.contains('active')).toBe(false);
+
+    // Click on hyper_rainbow skin
     skinButtons[2].dispatchEvent({ type: 'click' });
     expect(skinButtons[2].classList.contains('active')).toBe(true);
-    expect(skinButtons[0].classList.contains('active')).toBe(false);
+    expect(skinButtons[1].classList.contains('active')).toBe(false);
   });
 
   it('should update leaderboard and player stats correctly', () => {
@@ -125,7 +130,7 @@ describe('HUDManager UI Components', () => {
         {
           id: 'local-1',
           nickname: 'Hero',
-          skin: 'neon_blue',
+          skin: 'neon_cyan',
           head: { x: 500, y: 500, angle: 0 },
           body: [],
           mass: 35.5,
@@ -155,12 +160,11 @@ describe('HUDManager UI Components', () => {
     hud.updateHUD(world, 'unknown-id');
   });
 
-  it('should trigger onPlayClick, onRespawnClick, and onMobileBoostChange callbacks', () => {
+  it('should trigger onPlayClick and onRespawnClick callbacks', () => {
     const hud = new HUDManager(mockContainer);
 
     let played = false;
     let respawned = false;
-    let boostActive = false;
 
     hud.onPlayClick = (nick, _skin) => {
       played = true;
@@ -168,9 +172,6 @@ describe('HUDManager UI Components', () => {
     };
     hud.onRespawnClick = () => {
       respawned = true;
-    };
-    hud.onMobileBoostChange = (active) => {
-      boostActive = active;
     };
 
     // Simulate play click
@@ -182,84 +183,5 @@ describe('HUDManager UI Components', () => {
     const respawnBtn = document.getElementById('respawn-btn');
     if (respawnBtn) respawnBtn.dispatchEvent({ type: 'click' } as unknown as Event);
     expect(respawned).toBe(true);
-
-    // Simulate mobile boost pointer events
-    const boostBtn = document.getElementById('mobile-boost-btn');
-    if (boostBtn) {
-      boostBtn.classList.remove('disabled');
-      boostBtn.dispatchEvent({ type: 'pointerdown', preventDefault: () => {} } as unknown as Event);
-      expect(boostActive).toBe(true);
-
-      boostBtn.dispatchEvent({ type: 'pointerup', preventDefault: () => {} } as unknown as Event);
-      expect(boostActive).toBe(false);
-
-      boostBtn.dispatchEvent({ type: 'pointercancel', preventDefault: () => {} } as unknown as Event);
-      expect(boostActive).toBe(false);
-    }
-  });
-
-  it('should toggle mobile boost button disabled class based on mass threshold (3.0)', () => {
-    const hud = new HUDManager(mockContainer);
-    const boostBtn = document.getElementById('mobile-boost-btn');
-
-    let boostTriggered = false;
-    hud.onMobileBoostChange = (active) => {
-      boostTriggered = active;
-    };
-
-    // Snake with mass 3.0 (spawn / minimum mass)
-    const lowMassWorld: InterpolatedWorld = {
-      tick: 1,
-      snakes: [
-        {
-          id: 'local-1',
-          nickname: 'SmallSnake',
-          skin: 'neon_blue',
-          head: { x: 500, y: 500, angle: 0 },
-          body: [],
-          mass: 3.0,
-          alive: true,
-          score: 30,
-          boost: false,
-        },
-      ],
-      foods: [],
-      leaderboard: [],
-    };
-
-    hud.updateHUD(lowMassWorld, 'local-1');
-    expect(boostBtn?.classList.contains('disabled')).toBe(true);
-
-    // Attempt pointerdown while disabled
-    boostTriggered = false;
-    boostBtn?.dispatchEvent({ type: 'pointerdown', preventDefault: () => {} } as unknown as Event);
-    expect(boostTriggered).toBe(false);
-
-    // Snake with mass 4.5 (eaten pellets, above threshold)
-    const grownWorld: InterpolatedWorld = {
-      tick: 2,
-      snakes: [
-        {
-          id: 'local-1',
-          nickname: 'SmallSnake',
-          skin: 'neon_blue',
-          head: { x: 500, y: 500, angle: 0 },
-          body: [],
-          mass: 4.5,
-          alive: true,
-          score: 45,
-          boost: false,
-        },
-      ],
-      foods: [],
-      leaderboard: [],
-    };
-
-    hud.updateHUD(grownWorld, 'local-1');
-    expect(boostBtn?.classList.contains('disabled')).toBe(false);
-
-    // Pointerdown while enabled
-    boostBtn?.dispatchEvent({ type: 'pointerdown', preventDefault: () => {} } as unknown as Event);
-    expect(boostTriggered).toBe(true);
   });
 });

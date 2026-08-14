@@ -98,6 +98,10 @@ class SnakeRoyaleApp {
     this._wsClient.onDeath = (death: PlayerDeathPayload) => {
       this._isPlaying = false;
       this._localPredictor.alive = false;
+      const head = this._localPredictor.getPredictedSnake()?.head;
+      if (head) {
+        this._renderer.spawnExplosion(head.x, head.y, '#ff0055', 30);
+      }
       this._hud.showGameOver(death);
     };
   }
@@ -132,12 +136,8 @@ class SnakeRoyaleApp {
       this._sendCurrentInput();
     };
 
-    // Touch & Pointer Events on Canvas for dynamic floating joystick
+    // Touch & Pointer Events on Canvas for dynamic floating joystick with Double-Tap & Hold Turbo
     this._canvas.addEventListener('pointerdown', (e: PointerEvent) => {
-      // Exclude pointer if it originates from mobile turbo button
-      if (e.clientX > window.innerWidth - 120 && e.clientY > window.innerHeight - 120) {
-        return;
-      }
       this._virtualJoystick.handlePointerDown(e.pointerId, e.clientX, e.clientY);
     });
 
@@ -179,10 +179,6 @@ class SnakeRoyaleApp {
       this._localPredictor.reset();
       this._wsClient.sendRespawn();
       this._isPlaying = true;
-    };
-
-    this._hud.onMobileBoostChange = (active) => {
-      this._virtualJoystick.setBoost(active);
     };
   }
 

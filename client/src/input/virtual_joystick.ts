@@ -1,7 +1,7 @@
 /**
  * Dynamic Floating Virtual Joystick for Mobile & Tablet touchscreens.
- * Uses PointerEvents to support seamless multi-touch (movement + dedicated boost button).
- * Includes micro-deadzone filtering and instant event-driven dispatch.
+ * Supports universal Double-Tap & Hold gesture for Turbo Boost, multi-touch boost,
+ * micro-deadzone filtering, and instant event-driven dispatch.
  */
 
 export interface JoystickRenderState {
@@ -27,6 +27,8 @@ export class VirtualJoystick {
 
   private _boostActive: boolean = false;
   private _boostPointerId: number | null = null;
+  private _lastTapTime: number = 0;
+  public doubleTapWindowMs: number = 300.0;
 
   public onInputChange?: (angle: number, boost: boolean) => void;
   public angleThreshold: number = 0.015;
@@ -36,13 +38,25 @@ export class VirtualJoystick {
   }
 
   public handlePointerDown(pointerId: number, x: number, y: number, isBoostZone: boolean = false): boolean {
-    if (isBoostZone) {
+    const now = typeof performance !== 'undefined' ? performance.now() : Date.now();
+    const timeSinceLastTap = now - this._lastTapTime;
+
+    // 1. Check for Double-Tap & Hold Gesture (2nd tap within 300ms held down)
+    if ((this._lastTapTime > 0 && timeSinceLastTap <= this.doubleTapWindowMs) || isBoostZone) {
+      this._boostActive = true;
+      this._boostPointerId = pointerId;
+    }
+    this._lastTapTime = now;
+
+    // 2. If primary joystick is already active and another touch lands -> secondary finger boost
+    if (this._active && this._pointerId !== pointerId) {
       this._boostActive = true;
       this._boostPointerId = pointerId;
       this._notifyChange(true);
       return true;
     }
 
+    // 3. Primary joystick acquisition
     if (!this._active) {
       this._active = true;
       this._pointerId = pointerId;
@@ -50,6 +64,7 @@ export class VirtualJoystick {
       this._baseY = y;
       this._knobX = x;
       this._knobY = y;
+      this._notifyChange(true);
       return true;
     }
 
@@ -76,16 +91,19 @@ export class VirtualJoystick {
   }
 
   public handlePointerUp(pointerId: number): void {
+    if (this._boostPointerId === pointerId || this._pointerId === pointerId) {
+      if (this._boostActive) {
+        this._boostActive = false;
+        this._boostPointerId = null;
+        this._notifyChange(true);
+      }
+    }
+
     if (this._active && this._pointerId === pointerId) {
       this._active = false;
       this._pointerId = null;
       this._knobX = this._baseX;
       this._knobY = this._baseY;
-    }
-
-    if (this._boostActive && this._boostPointerId === pointerId) {
-      this._boostActive = false;
-      this._boostPointerId = null;
       this._notifyChange(true);
     }
   }

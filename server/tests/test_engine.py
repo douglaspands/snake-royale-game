@@ -156,3 +156,21 @@ def test_game_engine_snapshot_schema_validation(validator: type[SchemaValidator]
     assert len(snapshot["snakes"]) == 2
     assert 550 <= len(snapshot["foods"]) <= 600
     assert len(snapshot["leaderboard"]) == 2
+
+
+def test_snake_no_self_collision_pure_contact():
+    """Verifies that a snake never collides with its own body even when looping tightly."""
+    engine = GameEngine(arena_width=3000.0, arena_height=3000.0, tick_rate=30)
+    engine.register_player("solo", "SoloSnake", "neon_cyan")
+    snake = engine.spawn_player_snake("solo")
+    snake.mass = 50.0  # long snake
+    snake._init_body()
+
+    # Manually place head on top of its own 10th segment
+    seg10 = snake.get_body_segments()[9]
+    snake.head = Vector2D(seg10.x, seg10.y)
+
+    engine.step(0.033)
+    # Snake MUST remain alive (no phantom self-collision)
+    assert snake.alive is True
+    assert len(engine.pending_deaths) == 0

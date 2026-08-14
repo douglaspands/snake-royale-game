@@ -1,6 +1,7 @@
 /**
  * High-performance Canvas 2D Renderer for Snake Battle Royale.
- * Renders snakes, dynamic skins, eyes, boost particles, glowing food, arena boundaries, minimap and virtual joystick.
+ * Renders 12+ mixed/bicolor skins, tracking eyes, boost sparks, impact explosions,
+ * glowing food, arena boundaries, minimap, and virtual joystick.
  */
 
 import { Camera } from './camera';
@@ -8,50 +9,182 @@ import { InterpolatedWorld, InterpolatedSnake } from '../net/interpolator';
 import { JoystickRenderState } from '../input/virtual_joystick';
 
 export interface SkinPalette {
+  name: string;
   head: string;
   bodyStart: string;
   bodyEnd: string;
   outline: string;
   glow: string;
+  pattern: 'alternate' | 'gradient' | 'rainbow' | 'zebra';
 }
 
 export const SKINS: Record<string, SkinPalette> = {
-  neon_blue: {
+  neon_cyan: {
+    name: 'Neon Cyan',
     head: '#00f0ff',
-    bodyStart: '#00d2ff',
+    bodyStart: '#00f0ff',
     bodyEnd: '#0055ff',
     outline: '#002b80',
     glow: 'rgba(0, 240, 255, 0.4)',
+    pattern: 'alternate',
   },
-  cyber_pink: {
+  cyber_magenta: {
+    name: 'Cyber Magenta',
     head: '#ff007f',
-    bodyStart: '#ff2d95',
+    bodyStart: '#ff007f',
     bodyEnd: '#8b00ff',
     outline: '#4a005a',
     glow: 'rgba(255, 0, 127, 0.4)',
+    pattern: 'alternate',
   },
-  toxic_green: {
+  toxic_lime: {
+    name: 'Toxic Lime',
     head: '#39ff14',
-    bodyStart: '#20e010',
+    bodyStart: '#39ff14',
     bodyEnd: '#00aa55',
     outline: '#004d1a',
     glow: 'rgba(57, 255, 20, 0.4)',
+    pattern: 'alternate',
   },
-  solar_gold: {
+  solar_flare: {
+    name: 'Solar Flare',
     head: '#ffd700',
     bodyStart: '#ffaa00',
-    bodyEnd: '#ff4500',
-    outline: '#803300',
+    bodyEnd: '#ff2200',
+    outline: '#802000',
     glow: 'rgba(255, 215, 0, 0.4)',
+    pattern: 'gradient',
+  },
+  hyper_rainbow: {
+    name: 'Hyper Rainbow',
+    head: '#ffffff',
+    bodyStart: '#ff0055',
+    bodyEnd: '#00ffff',
+    outline: '#222222',
+    glow: 'rgba(255, 255, 255, 0.5)',
+    pattern: 'rainbow',
+  },
+  galaxy_void: {
+    name: 'Galaxy Void',
+    head: '#9d00ff',
+    bodyStart: '#6b00b6',
+    bodyEnd: '#0d001a',
+    outline: '#3d0066',
+    glow: 'rgba(157, 0, 255, 0.4)',
+    pattern: 'alternate',
+  },
+  sunset_vapor: {
+    name: 'Sunset Vapor',
+    head: '#ff6b6b',
+    bodyStart: '#ffa07a',
+    bodyEnd: '#9b59b6',
+    outline: '#5b2c6f',
+    glow: 'rgba(255, 107, 107, 0.4)',
+    pattern: 'alternate',
+  },
+  lava_magma: {
+    name: 'Lava Magma',
+    head: '#ff3300',
+    bodyStart: '#ff5500',
+    bodyEnd: '#1a0500',
+    outline: '#4d0000',
+    glow: 'rgba(255, 51, 0, 0.4)',
+    pattern: 'alternate',
+  },
+  ice_frost: {
+    name: 'Ice Frost',
+    head: '#ffffff',
+    bodyStart: '#a8ffeb',
+    bodyEnd: '#00b4d8',
+    outline: '#005f73',
+    glow: 'rgba(168, 255, 235, 0.4)',
+    pattern: 'alternate',
+  },
+  toxic_hazard: {
+    name: 'Toxic Hazard',
+    head: '#ffcc00',
+    bodyStart: '#ffcc00',
+    bodyEnd: '#111111',
+    outline: '#222222',
+    glow: 'rgba(255, 204, 0, 0.4)',
+    pattern: 'zebra',
+  },
+  bubblegum: {
+    name: 'Bubblegum',
+    head: '#ff99c8',
+    bodyStart: '#ff99c8',
+    bodyEnd: '#a9def9',
+    outline: '#d45087',
+    glow: 'rgba(255, 153, 200, 0.4)',
+    pattern: 'alternate',
+  },
+  matrix_code: {
+    name: 'Matrix Code',
+    head: '#00ff66',
+    bodyStart: '#00ff66',
+    bodyEnd: '#002200',
+    outline: '#003311',
+    glow: 'rgba(0, 255, 102, 0.4)',
+    pattern: 'alternate',
+  },
+  // Legacy aliases
+  neon_blue: {
+    name: 'Neon Blue',
+    head: '#00f0ff',
+    bodyStart: '#00f0ff',
+    bodyEnd: '#0055ff',
+    outline: '#002b80',
+    glow: 'rgba(0, 240, 255, 0.4)',
+    pattern: 'alternate',
+  },
+  cyber_pink: {
+    name: 'Cyber Pink',
+    head: '#ff007f',
+    bodyStart: '#ff007f',
+    bodyEnd: '#8b00ff',
+    outline: '#4a005a',
+    glow: 'rgba(255, 0, 127, 0.4)',
+    pattern: 'alternate',
+  },
+  toxic_green: {
+    name: 'Toxic Green',
+    head: '#39ff14',
+    bodyStart: '#39ff14',
+    bodyEnd: '#00aa55',
+    outline: '#004d1a',
+    glow: 'rgba(57, 255, 20, 0.4)',
+    pattern: 'alternate',
+  },
+  solar_gold: {
+    name: 'Solar Gold',
+    head: '#ffd700',
+    bodyStart: '#ffaa00',
+    bodyEnd: '#ff2200',
+    outline: '#802000',
+    glow: 'rgba(255, 215, 0, 0.4)',
+    pattern: 'gradient',
   },
   classic: {
+    name: 'Classic Green',
     head: '#00e676',
     bodyStart: '#00c853',
     bodyEnd: '#009688',
     outline: '#004d40',
     glow: 'rgba(0, 230, 118, 0.4)',
+    pattern: 'alternate',
   },
 };
+
+export interface ImpactParticle {
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  color: string;
+  radius: number;
+  alpha: number;
+  decay: number;
+}
 
 export class GameRenderer {
   private _canvas: HTMLCanvasElement;
@@ -59,6 +192,7 @@ export class GameRenderer {
   private _camera: Camera;
   public arenaWidth: number = 3000;
   public arenaHeight: number = 3000;
+  private _particles: ImpactParticle[] = [];
 
   constructor(canvas: HTMLCanvasElement, camera: Camera, arenaWidth: number = 3000, arenaHeight: number = 3000) {
     this._canvas = canvas;
@@ -66,6 +200,23 @@ export class GameRenderer {
     this._camera = camera;
     this.arenaWidth = arenaWidth;
     this.arenaHeight = arenaHeight;
+  }
+
+  public spawnExplosion(x: number, y: number, color: string = '#ff007f', count: number = 24): void {
+    for (let i = 0; i < count; i++) {
+      const angle = Math.random() * Math.PI * 2;
+      const speed = Math.random() * 180 + 40;
+      this._particles.push({
+        x,
+        y,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed,
+        color,
+        radius: Math.random() * 3.5 + 2.0,
+        alpha: 1.0,
+        decay: Math.random() * 1.8 + 1.2,
+      });
+    }
   }
 
   public render(
@@ -121,19 +272,47 @@ export class GameRenderer {
       }
     }
 
-    // 6. Restore World Transform
+    // 6. Draw Impact / Elimination Particles in World Space
+    this._drawParticles(ctx, 0.016);
+
+    // 7. Restore World Transform
     this._camera.restoreTransform(ctx);
 
-    // 7. Draw Screen-Space Stabilized Nameplates (REQ-REND-001 / REQ-REND-003)
+    // 8. Draw Screen-Space Stabilized Nameplates
     this._drawNameplates(ctx, sortedSnakes, localPlayerId, width, height);
 
-    // 8. Draw Minimap & Screen Overlays
+    // 9. Draw Minimap & Screen Overlays
     this._drawMinimap(ctx, world, localPlayerId, width, height);
 
-    // 9. Draw Virtual Joystick if active on screen
+    // 10. Draw Virtual Joystick if active on screen
     if (joystickState && joystickState.active) {
       this._drawJoystick(ctx, joystickState);
     }
+  }
+
+  private _drawParticles(ctx: CanvasRenderingContext2D, dt: number): void {
+    if (this._particles.length === 0) return;
+
+    const aliveParticles: ImpactParticle[] = [];
+    for (const p of this._particles) {
+      p.x += p.vx * dt;
+      p.y += p.vy * dt;
+      p.alpha -= p.decay * dt;
+
+      if (p.alpha > 0.01) {
+        ctx.save();
+        ctx.globalAlpha = Math.max(0, p.alpha);
+        ctx.fillStyle = p.color;
+        ctx.shadowColor = p.color;
+        ctx.shadowBlur = 8;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+        aliveParticles.push(p);
+      }
+    }
+    this._particles = aliveParticles;
   }
 
   private _drawArena(ctx: CanvasRenderingContext2D): void {
@@ -164,29 +343,28 @@ export class GameRenderer {
     }
     ctx.stroke();
 
-    // Draw glowing Arena Border
+    // Draw prominent boundary perimeter (REQ-PHYS-001)
     ctx.lineWidth = 6;
-    ctx.strokeStyle = '#ff3366';
-    ctx.shadowColor = '#ff3366';
-    ctx.shadowBlur = 12;
+    ctx.strokeStyle = '#ff0055';
+    ctx.shadowColor = '#ff0055';
+    ctx.shadowBlur = 15;
     ctx.strokeRect(0, 0, this.arenaWidth, this.arenaHeight);
     ctx.shadowBlur = 0;
   }
 
   private _drawFood(ctx: CanvasRenderingContext2D, foods: InterpolatedWorld['foods']): void {
-    const bounds = this._camera.getVisibleBounds(50);
-    const time = Date.now() / 1000;
+    const bounds = this._camera.getVisibleBounds(20);
+    const now = typeof performance !== 'undefined' ? performance.now() : 0;
+    const pulse = Math.sin(now * 0.005) * 1.5;
 
     for (const food of foods) {
-      // Culling
+      // Frustum culling
       if (food.x < bounds.minX || food.x > bounds.maxX || food.y < bounds.minY || food.y > bounds.maxY) {
         continue;
       }
 
-      const pulse = Math.sin(time * 4 + food.id) * 0.8 + 5.0;
-
       if (food.type === 'corpse') {
-        // Glowing big corpse pellet
+        // High-value glowing corpse pellet
         ctx.fillStyle = '#ff00ff';
         ctx.shadowColor = '#ff00ff';
         ctx.shadowBlur = 8;
@@ -215,7 +393,7 @@ export class GameRenderer {
   }
 
   private _drawSnake(ctx: CanvasRenderingContext2D, snake: InterpolatedSnake, isLocal: boolean): void {
-    const palette = SKINS[snake.skin] || SKINS.neon_blue;
+    const palette = SKINS[snake.skin] || SKINS.neon_cyan;
     const headRadius = 14 + 0.8 * Math.sqrt(Math.max(1, snake.mass));
     const bodyRadius = 12 + 0.7 * Math.sqrt(Math.max(1, snake.mass));
 
@@ -224,9 +402,19 @@ export class GameRenderer {
     for (let i = body.length - 1; i >= 0; i--) {
       const seg = body[i];
       const alpha = 1 - i / (body.length + 1);
-      const segRadius = bodyRadius * (0.6 + 0.4 * alpha);
+      const segRadius = bodyRadius * (0.65 + 0.35 * alpha);
 
-      ctx.fillStyle = i % 2 === 0 ? palette.bodyStart : palette.bodyEnd;
+      // Apply pattern logic
+      if (palette.pattern === 'rainbow') {
+        const hue = (i * 28 + (typeof performance !== 'undefined' ? performance.now() * 0.08 : 0)) % 360;
+        ctx.fillStyle = `hsl(${hue}, 100%, 55%)`;
+      } else if (palette.pattern === 'zebra') {
+        ctx.fillStyle = i % 2 === 0 ? palette.bodyStart : palette.bodyEnd;
+      } else {
+        // Bicolor / alternating pattern
+        ctx.fillStyle = i % 2 === 0 ? palette.bodyStart : palette.bodyEnd;
+      }
+
       ctx.strokeStyle = palette.outline;
       ctx.lineWidth = 2;
 
@@ -236,10 +424,10 @@ export class GameRenderer {
       ctx.stroke();
     }
 
-    // 2. Draw Boost Glow / Particles if boosting
+    // 2. Draw Boost Glow if boosting
     if (snake.boost) {
       ctx.shadowColor = palette.head;
-      ctx.shadowBlur = 15;
+      ctx.shadowBlur = 18;
     }
 
     // 3. Draw Head
@@ -298,44 +486,31 @@ export class GameRenderer {
       const screenPos = this._camera.worldToScreen(snake.head.x, snake.head.y);
 
       // Frustum culling in screen space
-      if (
-        screenPos.x < -100 ||
-        screenPos.x > screenWidth + 100 ||
-        screenPos.y < -100 ||
-        screenPos.y > screenHeight + 100
-      ) {
+      if (screenPos.x < -100 || screenPos.x > screenWidth + 100 || screenPos.y < -100 || screenPos.y > screenHeight + 100) {
         continue;
       }
 
-      // Round to exact integer screen pixels to completely prevent font hinting jitter
+      // Exact Integer Pixel Alignment (REQ-REND-003)
       const nx = Math.round(screenPos.x);
-      const ny = Math.round(screenPos.y - (headRadius + 14) * this._camera.zoom);
+      const ny = Math.round(screenPos.y - headRadius * this._camera.zoom - 16);
 
-      // Measure text for pill container
-      const textMetrics = ctx.measureText(snake.nickname);
-      const textW = Math.round(textMetrics.width || 40);
-      const pillW = textW + 16;
-      const pillH = 20;
-      const pillX = Math.round(nx - pillW / 2);
-      const pillY = Math.round(ny - pillH / 2);
+      const label = snake.nickname || 'Viper';
+      const scoreText = `${snake.score.toLocaleString()} pts`;
+      const textWidth = Math.max(ctx.measureText(label).width, ctx.measureText(scoreText).width) + 16;
 
-      // Draw Semi-transparent Pill Badge
-      ctx.fillStyle = isLocal ? 'rgba(10, 24, 40, 0.85)' : 'rgba(10, 15, 26, 0.75)';
-      ctx.strokeStyle = isLocal ? 'rgba(0, 240, 255, 0.8)' : 'rgba(255, 255, 255, 0.18)';
+      // Background pill
+      ctx.fillStyle = isLocal ? 'rgba(0, 240, 255, 0.25)' : 'rgba(10, 13, 20, 0.75)';
+      ctx.strokeStyle = isLocal ? 'rgba(0, 240, 255, 0.8)' : 'rgba(255, 255, 255, 0.2)';
       ctx.lineWidth = 1;
 
       ctx.beginPath();
-      if (typeof ctx.roundRect === 'function') {
-        ctx.roundRect(pillX, pillY, pillW, pillH, 6);
-      } else {
-        ctx.rect(pillX, pillY, pillW, pillH);
-      }
+      ctx.roundRect(nx - textWidth / 2, ny - 10, textWidth, 20, 10);
       ctx.fill();
       ctx.stroke();
 
-      // Draw Crisp Stabilized Text
+      // Nickname text
       ctx.fillStyle = isLocal ? '#00f0ff' : '#ffffff';
-      ctx.fillText(snake.nickname, nx, ny);
+      ctx.fillText(label, nx, ny);
     }
   }
 
@@ -344,44 +519,44 @@ export class GameRenderer {
     world: InterpolatedWorld,
     localPlayerId: string | null,
     screenWidth: number,
-    screenHeight: number
+    _screenHeight: number
   ): void {
-    const size = 130;
-    const margin = 16;
-    const miniX = screenWidth - size - margin;
-    const miniY = screenHeight - size - margin;
+    const mapSize = Math.min(130, screenWidth * 0.22);
+    const padding = 16;
+    const mapX = screenWidth - mapSize - padding;
+    const mapY = padding;
 
     // Minimap Background
-    ctx.fillStyle = 'rgba(10, 15, 26, 0.85)';
+    ctx.fillStyle = 'rgba(10, 13, 20, 0.8)';
     ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
-    ctx.lineWidth = 1.5;
+    ctx.lineWidth = 2;
+
     ctx.beginPath();
-    ctx.roundRect ? ctx.roundRect(miniX, miniY, size, size, 8) : ctx.rect(miniX, miniY, size, size);
+    ctx.roundRect(mapX, mapY, mapSize, mapSize, 8);
     ctx.fill();
     ctx.stroke();
 
-    // Scale factors
-    const sx = size / this.arenaWidth;
-    const sy = size / this.arenaHeight;
+    const scaleX = mapSize / this.arenaWidth;
+    const scaleY = mapSize / this.arenaHeight;
 
-    // Draw snake blips on minimap
+    // Draw other snakes on minimap
     for (const snake of world.snakes) {
       if (!snake.alive) continue;
       const isLocal = snake.id === localPlayerId;
-      const px = miniX + snake.head.x * sx;
-      const py = miniY + snake.head.y * sy;
+      const smX = mapX + snake.head.x * scaleX;
+      const smY = mapY + snake.head.y * scaleY;
 
-      ctx.fillStyle = isLocal ? '#00f0ff' : '#ff4466';
+      ctx.fillStyle = isLocal ? '#00f0ff' : '#ff0055';
       ctx.beginPath();
-      ctx.arc(px, py, isLocal ? 3.5 : 2.0, 0, Math.PI * 2);
+      ctx.arc(smX, smY, isLocal ? 3.5 : 2.0, 0, Math.PI * 2);
       ctx.fill();
     }
   }
 
   private _drawJoystick(ctx: CanvasRenderingContext2D, state: JoystickRenderState): void {
-    // Draw Base Ring
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.25)';
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.08)';
+    // Outer Base Ring
+    ctx.strokeStyle = 'rgba(0, 240, 255, 0.35)';
+    ctx.fillStyle = 'rgba(0, 240, 255, 0.08)';
     ctx.lineWidth = 3;
 
     ctx.beginPath();
@@ -389,14 +564,14 @@ export class GameRenderer {
     ctx.fill();
     ctx.stroke();
 
-    // Draw Knob
-    ctx.fillStyle = 'rgba(0, 240, 255, 0.65)';
-    ctx.strokeStyle = '#ffffff';
-    ctx.lineWidth = 2;
+    // Inner Active Knob
+    ctx.fillStyle = 'rgba(0, 240, 255, 0.85)';
+    ctx.shadowColor = '#00f0ff';
+    ctx.shadowBlur = 12;
 
     ctx.beginPath();
-    ctx.arc(state.knobX, state.knobY, 24, 0, Math.PI * 2);
+    ctx.arc(state.knobX, state.knobY, state.radius * 0.4, 0, Math.PI * 2);
     ctx.fill();
-    ctx.stroke();
+    ctx.shadowBlur = 0;
   }
 }
