@@ -4,7 +4,8 @@ Validates all incoming and outgoing messages against strict JSON Schemas.
 """
 
 import json
-from typing import Any, Dict
+from typing import Any
+
 import jsonschema
 
 JOIN_SCHEMA = {
@@ -65,7 +66,17 @@ WORLD_SNAPSHOT_SCHEMA = {
             "type": "array",
             "items": {
                 "type": "object",
-                "required": ["id", "nickname", "skin", "head", "body", "mass", "alive", "score", "boost"],
+                "required": [
+                    "id",
+                    "nickname",
+                    "skin",
+                    "head",
+                    "body",
+                    "mass",
+                    "alive",
+                    "score",
+                    "boost",
+                ],
                 "properties": {
                     "id": {"type": "string"},
                     "nickname": {"type": "string"},
@@ -154,7 +165,7 @@ RESPAWN_REQUEST_SCHEMA = {
     "additionalProperties": False,
 }
 
-SCHEMAS: Dict[str, Dict[str, Any]] = {
+SCHEMAS: dict[str, dict[str, Any]] = {
     "JOIN": JOIN_SCHEMA,
     "JOIN_ACK": JOIN_ACK_SCHEMA,
     "INPUT": INPUT_SCHEMA,
@@ -166,15 +177,12 @@ SCHEMAS: Dict[str, Dict[str, Any]] = {
 
 class SchemaValidator:
     @staticmethod
-    def validate(data: Dict[str, Any] | str) -> bool:
+    def validate(data: dict[str, Any] | str) -> bool:
         """
         Validates a dictionary or JSON string payload against the registered schema.
         Raises jsonschema.ValidationError on failure.
         """
-        if isinstance(data, str):
-            payload = json.loads(data)
-        else:
-            payload = data
+        payload = json.loads(data) if isinstance(data, str) else data
 
         packet_type = payload.get("type")
         if not packet_type or packet_type not in SCHEMAS:
@@ -185,7 +193,7 @@ class SchemaValidator:
         return True
 
     @staticmethod
-    def is_valid(data: Dict[str, Any] | str) -> bool:
+    def is_valid(data: dict[str, Any] | str) -> bool:
         """Returns True if valid, False otherwise."""
         try:
             return SchemaValidator.validate(data)

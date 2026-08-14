@@ -3,9 +3,9 @@ Async Game Loop runner executing at 30-40 Hz tick rate.
 """
 
 import asyncio
+import contextlib
 import logging
 import time
-from typing import Optional
 
 from server.app.game.engine import GameEngine
 from server.app.websocket_handler import ConnectionManager
@@ -14,13 +14,15 @@ logger = logging.getLogger("server.gameloop")
 
 
 class GameLoop:
-    def __init__(self, engine: GameEngine, connection_manager: ConnectionManager, tick_rate: int = 30):
+    def __init__(
+        self, engine: GameEngine, connection_manager: ConnectionManager, tick_rate: int = 30
+    ):
         self.engine = engine
         self.connection_manager = connection_manager
         self.tick_rate = tick_rate
         self.dt = 1.0 / tick_rate
         self._running = False
-        self._task: Optional[asyncio.Task] = None
+        self._task: asyncio.Task | None = None
 
     async def start(self) -> None:
         """Starts the async game loop background task."""
@@ -35,10 +37,8 @@ class GameLoop:
         self._running = False
         if self._task and not self._task.done():
             self._task.cancel()
-            try:
+            with contextlib.suppress(asyncio.CancelledError):
                 await self._task
-            except asyncio.CancelledError:
-                pass
         logger.info("GameLoop stopped")
 
     async def _run_loop(self) -> None:

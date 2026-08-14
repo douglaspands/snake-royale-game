@@ -3,7 +3,6 @@
 """
 
 import math
-from typing import Tuple
 
 
 class Vector2D:
@@ -37,10 +36,10 @@ class Vector2D:
         return self.x * self.x + self.y * self.y
 
     def normalized(self) -> "Vector2D":
-        l = self.length()
-        if l == 0:
+        mag = self.length()
+        if mag == 0:
             return Vector2D(0.0, 0.0)
-        return Vector2D(self.x / l, self.y / l)
+        return Vector2D(self.x / mag, self.y / mag)
 
     def distance_to(self, other: "Vector2D") -> float:
         return math.hypot(self.x - other.x, self.y - other.y)
@@ -50,7 +49,7 @@ class Vector2D:
         dy = self.y - other.y
         return dx * dx + dy * dy
 
-    def to_tuple(self) -> Tuple[float, float]:
+    def to_tuple(self) -> tuple[float, float]:
         return (self.x, self.y)
 
     def to_dict(self) -> dict:

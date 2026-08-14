@@ -2,9 +2,9 @@
 Unit tests for Spatial Hash Partitioning Grid.
 """
 
+from server.app.game.food import FoodPellet
 from server.app.game.math2d import Vector2D
 from server.app.game.snake import Snake
-from server.app.game.food import FoodPellet
 from server.app.game.spatial_hash import SpatialHashGrid
 
 

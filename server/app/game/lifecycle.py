@@ -2,14 +2,14 @@
 Player and Room Lifecycle Management and FSM.
 """
 
-from enum import Enum
 import random
-from typing import Dict, List, Optional, Tuple
+from enum import StrEnum
+
 from server.app.game.math2d import Vector2D
 from server.app.game.snake import Snake
 
 
-class PlayerState(str, Enum):
+class PlayerState(StrEnum):
     LOBBY = "LOBBY"
     PLAYING = "PLAYING"
     BOOSTING = "BOOSTING"
@@ -23,11 +23,11 @@ class PlayerSession:
         self.nickname = nickname
         self.skin = skin
         self.state: PlayerState = PlayerState.LOBBY
-        self.snake: Optional[Snake] = None
+        self.snake: Snake | None = None
         self.last_input_seq: int = 0
         self.final_score: int = 0
-        self.killer_id: Optional[str] = None
-        self.killer_name: Optional[str] = None
+        self.killer_id: str | None = None
+        self.killer_name: str | None = None
 
     def transition_to(self, new_state: PlayerState) -> None:
         """Transitions to a new state."""
@@ -39,10 +39,10 @@ class SpawnManager:
     def find_safe_spawn(
         arena_width: float,
         arena_height: float,
-        existing_snakes: List[Snake],
+        existing_snakes: list[Snake],
         min_safe_distance: float = 150.0,
         max_attempts: int = 30,
-    ) -> Tuple[float, float, float]:
+    ) -> tuple[float, float, float]:
         """
         Finds a safe (x, y, angle) spawn location away from any other active snakes.
         """

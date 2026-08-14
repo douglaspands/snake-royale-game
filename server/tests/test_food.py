@@ -3,8 +3,9 @@ Unit tests for Food management, ambient replenishment, boost drops, and corpse c
 """
 
 import pytest
-from server.app.game.math2d import Vector2D
+
 from server.app.game.food import FoodManager
+from server.app.game.math2d import Vector2D
 
 
 def test_food_initial_density():

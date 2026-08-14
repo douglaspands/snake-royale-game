@@ -1,12 +1,27 @@
 """
-Unit tests for async GameLoop lifecycle, starting, stopping, tick execution and error resilience.
+Unit tests for async GameLoop lifecycle, starting, stopping,
+tick execution and error resilience.
 """
 
 import asyncio
+
 import pytest
+
 from server.app.game.engine import GameEngine
 from server.app.game.loop import GameLoop
 from server.app.websocket_handler import ConnectionManager
+
+
+class FaultyGameEngine(GameEngine):
+    def __init__(self, *args: object, **kwargs: object) -> None:
+        super().__init__(arena_width=3000.0, arena_height=3000.0, tick_rate=60)
+        self.raised: bool = False
+
+    def step(self, dt: float = 0.033) -> None:
+        if not self.raised:
+            self.raised = True
+            raise RuntimeError("Simulated physics error")
+        super().step(dt)
 
 
 @pytest.mark.asyncio
@@ -34,25 +49,12 @@ async def test_game_loop_start_and_stop():
 
 @pytest.mark.asyncio
 async def test_game_loop_tick_exception_resilience():
-    engine = GameEngine(arena_width=3000.0, arena_height=3000.0, tick_rate=60)
+    engine = FaultyGameEngine()
     conn_mgr = ConnectionManager(engine=engine)
     loop = GameLoop(engine=engine, connection_manager=conn_mgr, tick_rate=60)
-
-    # Force step to raise an exception once
-    orig_step = engine.step
-    raised = False
-
-    def faulty_step(dt):
-        nonlocal raised
-        if not raised:
-            raised = True
-            raise RuntimeError("Simulated physics error")
-        orig_step(dt)
-
-    engine.step = faulty_step
 
     await loop.start()
     await asyncio.sleep(0.05)
     await loop.stop()
 
-    assert raised is True
+    assert engine.raised is True

@@ -3,21 +3,24 @@ Food pellet management, ambient spawning, boost drops, and corpse distribution.
 """
 
 import random
-from typing import Any, Dict, List
+from typing import Any
+
 from server.app.game.math2d import Vector2D
 
 
 class FoodPellet:
     __slots__ = ("id", "pos", "val", "type", "radius")
 
-    def __init__(self, food_id: int, x: float, y: float, val: float = 1.0, food_type: str = "normal"):
+    def __init__(
+        self, food_id: int, x: float, y: float, val: float = 1.0, food_type: str = "normal"
+    ):
         self.id = food_id
         self.pos = Vector2D(x, y)
         self.val = float(val)
         self.type = food_type
         self.radius = 6.0
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "id": self.id,
             "x": round(self.pos.x, 2),
@@ -35,7 +38,7 @@ class FoodManager:
         self.arena_width = arena_width
         self.arena_height = arena_height
         self._next_id: int = 1
-        self.foods: Dict[int, FoodPellet] = {}
+        self.foods: dict[int, FoodPellet] = {}
         self.seed_initial_food()
 
     def _get_next_id(self) -> int:
@@ -68,7 +71,7 @@ class FoodManager:
         fid = self._get_next_id()
         self.foods[fid] = FoodPellet(fid, jx, jy, val=1.2, food_type="boost_drop")
 
-    def spawn_corpse_pellets(self, body_points: List[Vector2D], total_mass: float) -> None:
+    def spawn_corpse_pellets(self, body_points: list[Vector2D], total_mass: float) -> None:
         """
         Converts 80% of a dead snake's mass into corpse food pellets along its body coordinates.
         """
@@ -95,6 +98,6 @@ class FoodManager:
         """Removes an eaten food pellet."""
         self.foods.pop(food_id, None)
 
-    def to_list(self) -> List[Dict[str, Any]]:
+    def to_list(self) -> list[dict[str, Any]]:
         """Returns serialized food list."""
         return [f.to_dict() for f in self.foods.values()]

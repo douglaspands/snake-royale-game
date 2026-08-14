@@ -3,7 +3,9 @@ Unit tests for Snake movement, turning, growth and boost mechanics.
 """
 
 import math
+
 import pytest
+
 from server.app.game.snake import Snake
 
 

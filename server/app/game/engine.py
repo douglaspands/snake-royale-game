@@ -3,28 +3,34 @@ Server-Authoritative Game Engine.
 Coordinates physics updates, collisions, food absorption, player lifecycle, and snapshot generation.
 """
 
-from typing import Any, Callable, Dict, List, Optional, Set, Tuple
-import math
 import time
+from typing import Any
 
+from server.app.game.food import FoodManager
+from server.app.game.lifecycle import PlayerSession, PlayerState, SpawnManager
 from server.app.game.math2d import Vector2D
 from server.app.game.snake import Snake
-from server.app.game.food import FoodManager, FoodPellet
 from server.app.game.spatial_hash import SpatialHashGrid
-from server.app.game.lifecycle import PlayerSession, PlayerState, SpawnManager
 
 
 class DeathEvent:
     __slots__ = ("player_id", "killer_id", "killer_name", "final_score", "mass")
 
-    def __init__(self, player_id: str, killer_id: Optional[str], killer_name: Optional[str], final_score: int, mass: float):
+    def __init__(
+        self,
+        player_id: str,
+        killer_id: str | None,
+        killer_name: str | None,
+        final_score: int,
+        mass: float,
+    ):
         self.player_id = player_id
         self.killer_id = killer_id
         self.killer_name = killer_name
         self.final_score = final_score
         self.mass = mass
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "type": "PLAYER_DEATH",
             "killerId": self.killer_id,
@@ -46,13 +52,13 @@ class GameEngine:
         self.tick_rate = int(tick_rate)
         self.tick = 0
 
-        self.players: Dict[str, PlayerSession] = {}
-        self.snakes: Dict[str, Snake] = {}
+        self.players: dict[str, PlayerSession] = {}
+        self.snakes: dict[str, Snake] = {}
         self.food_manager = FoodManager(self.arena_width, self.arena_height)
         self.spatial_grid = SpatialHashGrid(cell_size=100.0)
 
         # Death events generated during the current tick
-        self.pending_deaths: List[DeathEvent] = []
+        self.pending_deaths: list[DeathEvent] = []
 
     def register_player(self, player_id: str, nickname: str, skin: str) -> PlayerSession:
         """Registers a new player in the lobby."""
@@ -106,7 +112,7 @@ class GameEngine:
         else:
             session.transition_to(PlayerState.PLAYING)
 
-    def respawn_player(self, player_id: str) -> Optional[Snake]:
+    def respawn_player(self, player_id: str) -> Snake | None:
         """Respawns an eliminated player."""
         session = self.players.get(player_id)
         if not session:
@@ -122,7 +128,7 @@ class GameEngine:
         self.pending_deaths.clear()
 
         # 1. Step snake movements and collect boost drops
-        boost_drops: List[Vector2D] = []
+        boost_drops: list[Vector2D] = []
         for snake in list(self.snakes.values()):
             if not snake.alive:
                 continue
@@ -159,7 +165,7 @@ class GameEngine:
                     self.food_manager.remove_food(food.id)
 
         # 4. Check Arena Boundary Collisions
-        dead_this_tick: Dict[str, Tuple[Optional[str], Optional[str]]] = {}
+        dead_this_tick: dict[str, tuple[str | None, str | None]] = {}
         for s_id, snake in self.snakes.items():
             if not snake.alive:
                 continue
@@ -187,10 +193,14 @@ class GameEngine:
                 if not other_snake:
                     continue
 
-                # If touching enemy neck segment while in head-to-head range, defer to head-to-head resolution
-                if seg_ref.snake_id != snake.id and seg_ref.segment_idx <= 2:
-                    if snake.head.distance_to(other_snake.head) <= (snake.head_radius + other_snake.head_radius) * 1.1:
-                        continue
+                # Defer neck segment collision to head-to-head resolution
+                if (
+                    seg_ref.snake_id != snake.id
+                    and seg_ref.segment_idx <= 2
+                    and snake.head.distance_to(other_snake.head)
+                    <= (snake.head_radius + other_snake.head_radius) * 1.1
+                ):
+                    continue
 
                 d = snake.head.distance_to(seg_ref.pos)
                 threshold = (snake.head_radius + other_snake.body_radius) * 0.85
@@ -249,7 +259,7 @@ class GameEngine:
         # 7. Maintain ambient food density
         self.food_manager.maintain_food_density()
 
-    def get_leaderboard(self, top_n: int = 10) -> List[Dict[str, Any]]:
+    def get_leaderboard(self, top_n: int = 10) -> list[dict[str, Any]]:
         """Calculates current Top-N leaderboard sorted by score descending."""
         sorted_snakes = sorted(
             [s for s in self.snakes.values() if s.alive],
@@ -266,7 +276,7 @@ class GameEngine:
             for idx, s in enumerate(sorted_snakes[:top_n])
         ]
 
-    def create_snapshot(self, timestamp: Optional[float] = None) -> Dict[str, Any]:
+    def create_snapshot(self, timestamp: float | None = None) -> dict[str, Any]:
         """Generates OpenSpec compliant WORLD_SNAPSHOT packet."""
         ts = timestamp if timestamp is not None else time.time() * 1000.0
         return {

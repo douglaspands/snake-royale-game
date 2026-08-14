@@ -2,11 +2,9 @@
 Spatial Hash Partitioning Grid for O(1) average lookup and O(N) collision detection.
 """
 
-import math
-from typing import Dict, List, Set, Tuple
+from server.app.game.food import FoodPellet
 from server.app.game.math2d import Vector2D
 from server.app.game.snake import Snake
-from server.app.game.food import FoodPellet
 
 
 class BodySegmentRef:
@@ -21,10 +19,10 @@ class BodySegmentRef:
 class SpatialHashGrid:
     def __init__(self, cell_size: float = 100.0):
         self.cell_size = float(cell_size)
-        self.body_cells: Dict[Tuple[int, int], List[BodySegmentRef]] = {}
-        self.food_cells: Dict[Tuple[int, int], List[FoodPellet]] = {}
+        self.body_cells: dict[tuple[int, int], list[BodySegmentRef]] = {}
+        self.food_cells: dict[tuple[int, int], list[FoodPellet]] = {}
 
-    def _get_cell_coords(self, x: float, y: float) -> Tuple[int, int]:
+    def _get_cell_coords(self, x: float, y: float) -> tuple[int, int]:
         return (int(x // self.cell_size), int(y // self.cell_size))
 
     def clear(self) -> None:
@@ -51,14 +49,14 @@ class SpatialHashGrid:
             self.food_cells[cell] = []
         self.food_cells[cell].append(food)
 
-    def query_nearby_segments(self, pos: Vector2D, radius: float) -> List[BodySegmentRef]:
+    def query_nearby_segments(self, pos: Vector2D, radius: float) -> list[BodySegmentRef]:
         """Queries all body segments in the 3x3 surrounding grid cells."""
         min_cell_x = int((pos.x - radius) // self.cell_size)
         max_cell_x = int((pos.x + radius) // self.cell_size)
         min_cell_y = int((pos.y - radius) // self.cell_size)
         max_cell_y = int((pos.y + radius) // self.cell_size)
 
-        result: List[BodySegmentRef] = []
+        result: list[BodySegmentRef] = []
         for cx in range(min_cell_x, max_cell_x + 1):
             for cy in range(min_cell_y, max_cell_y + 1):
                 cell = (cx, cy)
@@ -66,14 +64,14 @@ class SpatialHashGrid:
                     result.extend(self.body_cells[cell])
         return result
 
-    def query_nearby_foods(self, pos: Vector2D, radius: float) -> List[FoodPellet]:
+    def query_nearby_foods(self, pos: Vector2D, radius: float) -> list[FoodPellet]:
         """Queries all food pellets in the 3x3 surrounding grid cells."""
         min_cell_x = int((pos.x - radius) // self.cell_size)
         max_cell_x = int((pos.x + radius) // self.cell_size)
         min_cell_y = int((pos.y - radius) // self.cell_size)
         max_cell_y = int((pos.y + radius) // self.cell_size)
 
-        result: List[FoodPellet] = []
+        result: list[FoodPellet] = []
         for cx in range(min_cell_x, max_cell_x + 1):
             for cy in range(min_cell_y, max_cell_y + 1):
                 cell = (cx, cy)

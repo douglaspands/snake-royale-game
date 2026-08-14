@@ -3,10 +3,12 @@ Unit tests for FastAPI endpoints, WebSocket lifecycle, connection manager, broad
 """
 
 import json
+
 import pytest
 from starlette.testclient import TestClient
+
+from server.app.game.engine import DeathEvent, GameEngine
 from server.app.main import app
-from server.app.game.engine import GameEngine, DeathEvent
 from server.app.websocket_handler import ConnectionManager
 
 
@@ -65,6 +67,7 @@ async def test_connection_manager_broadcast_and_errors():
     class HealthyWebSocket:
         def __init__(self):
             self.sent = []
+
         async def send_text(self, text: str):
             self.sent.append(text)
 

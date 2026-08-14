@@ -2,8 +2,8 @@
 Factories for rapid, deterministic generation of test entities (Snakes, Food, Packets).
 """
 
-from typing import Any, Dict, List
 import uuid
+from typing import Any
 
 
 class EntityFactory:
@@ -21,10 +21,10 @@ class EntityFactory:
         alive: bool = True,
         score: int = 100,
         boost: bool = False,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Generates a serialized snake entity dictionary."""
         s_id = snake_id or str(uuid.uuid4())
-        body: List[Dict[str, float]] = []
+        body: list[dict[str, float]] = []
         # Create body segments trailing behind head according to angle
         for i in range(1, num_segments + 1):
             seg_x = head_x - (i * segment_spacing)
@@ -50,7 +50,7 @@ class EntityFactory:
         y: float = 300.0,
         val: float = 1.0,
         food_type: str = "normal",
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Generates food pellet data."""
         return {
             "id": food_id,
@@ -64,9 +64,9 @@ class EntityFactory:
     def create_world_snapshot(
         tick: int = 1,
         timestamp: float = 1000.0,
-        snakes: List[Dict[str, Any]] | None = None,
-        foods: List[Dict[str, Any]] | None = None,
-    ) -> Dict[str, Any]:
+        snakes: list[dict[str, Any]] | None = None,
+        foods: list[dict[str, Any]] | None = None,
+    ) -> dict[str, Any]:
         """Generates a valid WORLD_SNAPSHOT dictionary."""
         snk_list = snakes or [EntityFactory.create_snake_data()]
         food_list = foods or [EntityFactory.create_food_data()]

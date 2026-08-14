@@ -2,8 +2,8 @@
 In-memory Mock WebSocket Client for deterministic testing of game server interactions.
 """
 
-import json
-from typing import Any, Dict, List
+from typing import Any
+
 from server.tests.harness.schema_validator import SchemaValidator
 
 
@@ -12,11 +12,11 @@ class MockClient:
         self.client_id = client_id
         self.nickname = nickname
         self.skin = skin
-        self.received_messages: List[Dict[str, Any]] = []
+        self.received_messages: list[dict[str, Any]] = []
         self.seq = 0
         self.is_connected = True
 
-    async def send_json(self, data: Dict[str, Any]) -> None:
+    async def send_json(self, data: dict[str, Any]) -> None:
         """Simulates receiving a JSON message from the server."""
         if not self.is_connected:
             raise ConnectionError("Mock client is disconnected")
@@ -24,15 +24,15 @@ class MockClient:
         SchemaValidator.validate(data)
         self.received_messages.append(data)
 
-    def get_last_message(self) -> Dict[str, Any] | None:
+    def get_last_message(self) -> dict[str, Any] | None:
         """Returns the most recently received message."""
         return self.received_messages[-1] if self.received_messages else None
 
-    def get_messages_of_type(self, msg_type: str) -> List[Dict[str, Any]]:
+    def get_messages_of_type(self, msg_type: str) -> list[dict[str, Any]]:
         """Filters received messages by type."""
         return [m for m in self.received_messages if m.get("type") == msg_type]
 
-    def create_join_packet(self) -> Dict[str, Any]:
+    def create_join_packet(self) -> dict[str, Any]:
         """Creates a valid JOIN packet."""
         return {
             "type": "JOIN",
@@ -40,7 +40,7 @@ class MockClient:
             "skin": self.skin,
         }
 
-    def create_input_packet(self, angle: float, boost: bool = False) -> Dict[str, Any]:
+    def create_input_packet(self, angle: float, boost: bool = False) -> dict[str, Any]:
         """Creates an INPUT packet with incrementing sequence number."""
         self.seq += 1
         return {
@@ -50,7 +50,7 @@ class MockClient:
             "seq": self.seq,
         }
 
-    def create_respawn_packet(self) -> Dict[str, Any]:
+    def create_respawn_packet(self) -> dict[str, Any]:
         """Creates a RESPAWN_REQUEST packet."""
         return {
             "type": "RESPAWN_REQUEST",

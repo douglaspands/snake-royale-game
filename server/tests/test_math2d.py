@@ -3,8 +3,10 @@ Unit tests for 2D Math and Angle utilities.
 """
 
 import math
+
 import pytest
-from server.app.game.math2d import Vector2D, normalize_angle, step_angle, lerp, lerp_angle
+
+from server.app.game.math2d import Vector2D, lerp, lerp_angle, normalize_angle, step_angle
 
 
 def test_vector2d_operations():

@@ -3,13 +3,14 @@ FastAPI Application Entry Point for Snake Battle Royale Server.
 Provides WebSocket endpoints, game loop lifecycle, health check and static asset serving.
 """
 
-from contextlib import asynccontextmanager
 import os
 import uuid
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 
 from server.app.game.engine import GameEngine
 from server.app.game.loop import GameLoop
@@ -74,7 +75,9 @@ async def websocket_endpoint(websocket: WebSocket):
 
 
 # Mount static files from client/dist if present
-static_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "client", "dist")
+static_dir = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "client", "dist"
+)
 if os.path.exists(static_dir):
     app.mount("/assets", StaticFiles(directory=os.path.join(static_dir, "assets")), name="assets")
 

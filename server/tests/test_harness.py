@@ -2,12 +2,12 @@
 Unit tests for the Backend Test Harness (Virtual Clock, Schema Validator, Mock Client, Factories).
 """
 
-import pytest
 import jsonschema
-from server.tests.harness.virtual_clock import VirtualClock
-from server.tests.harness.schema_validator import SchemaValidator
+import pytest
+
 from server.tests.harness.factories import EntityFactory
-from server.tests.harness.mock_client import MockClient
+from server.tests.harness.schema_validator import SchemaValidator
+from server.tests.harness.virtual_clock import VirtualClock
 
 
 def test_virtual_clock_advancement(clock: VirtualClock):
@@ -37,7 +37,9 @@ def test_virtual_clock_scheduled_callbacks(clock: VirtualClock):
     assert len(triggered) == 1
 
 
-def test_schema_validator_valid_packets(validator: type[SchemaValidator], factory: type[EntityFactory]):
+def test_schema_validator_valid_packets(
+    validator: type[SchemaValidator], factory: type[EntityFactory]
+):
     join_packet = {"type": "JOIN", "nickname": "Viper", "skin": "neon_blue"}
     assert validator.validate(join_packet) is True
 

@@ -3,7 +3,7 @@ Deterministic Virtual Clock for zero-sleep testing.
 Enables microsecond-precise simulation stepping without wall-clock blocking.
 """
 
-from typing import Callable, List, Tuple
+from collections.abc import Callable
 
 
 class VirtualClock:
@@ -11,7 +11,7 @@ class VirtualClock:
         self.current_time = start_time
         self.default_dt = default_dt
         self.tick_count = 0
-        self._callbacks: List[Tuple[float, Callable[[], None]]] = []
+        self._callbacks: list[tuple[float, Callable[[], None]]] = []
 
     def now(self) -> float:
         """Returns the current simulated virtual time in seconds."""

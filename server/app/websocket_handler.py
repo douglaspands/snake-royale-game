@@ -1,15 +1,16 @@
 """
-WebSocket Handler managing real-time bidirectional client connections, input streaming and event dispatch.
+WebSocket Handler managing real-time bidirectional client connections,
+input streaming and event dispatch.
 """
 
 import asyncio
 import json
 import logging
-from typing import Any, Dict, Optional, Set
-from fastapi import WebSocket, WebSocketDisconnect
+from typing import Any
 
-from server.app.game.engine import GameEngine, DeathEvent
-from server.tests.harness.schema_validator import SchemaValidator
+from fastapi import WebSocket
+
+from server.app.game.engine import DeathEvent, GameEngine
 
 logger = logging.getLogger("server.websocket")
 
@@ -17,7 +18,7 @@ logger = logging.getLogger("server.websocket")
 class ConnectionManager:
     def __init__(self, engine: GameEngine):
         self.engine = engine
-        self.active_sockets: Dict[str, WebSocket] = {}
+        self.active_sockets: dict[str, WebSocket] = {}
         self._lock = asyncio.Lock()
 
     async def connect(self, websocket: WebSocket, player_id: str) -> None:
@@ -32,7 +33,7 @@ class ConnectionManager:
             self.active_sockets.pop(player_id, None)
         self.engine.remove_player(player_id)
 
-    async def send_personal_message(self, player_id: str, message: Dict[str, Any]) -> None:
+    async def send_personal_message(self, player_id: str, message: dict[str, Any]) -> None:
         """Sends a JSON message to a specific player."""
         ws = self.active_sockets.get(player_id)
         if ws:
@@ -41,7 +42,7 @@ class ConnectionManager:
             except Exception as e:
                 logger.warning(f"Error sending message to {player_id}: {e}")
 
-    async def broadcast_snapshot(self, snapshot: Dict[str, Any]) -> None:
+    async def broadcast_snapshot(self, snapshot: dict[str, Any]) -> None:
         """Broadcasts WORLD_SNAPSHOT to all connected players."""
         payload_str = json.dumps(snapshot)
         disconnected = []

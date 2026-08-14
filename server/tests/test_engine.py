@@ -1,8 +1,8 @@
 """
-Unit tests for GameEngine execution, collision resolution, deaths and OpenSpec snapshot schema conformance.
+Unit tests for GameEngine execution, collision resolution, deaths
+and OpenSpec snapshot schema conformance.
 """
 
-import pytest
 from server.app.game.engine import GameEngine
 from server.app.game.math2d import Vector2D
 from server.tests.harness.schema_validator import SchemaValidator
