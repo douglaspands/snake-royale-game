@@ -62,6 +62,7 @@ android/build/
 android/app/build/
 android/local.properties
 android/app/src/main/assets/client_dist/
+android/app/src/main/python/server/
 *.apk
 *.aab
 

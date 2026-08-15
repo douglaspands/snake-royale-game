@@ -12,8 +12,8 @@ android {
         applicationId = "com.snakeroyale.host"
         minSdk = 24
         targetSdk = 34
-        versionCode = 1
-        versionName = "1.5.0"
+        versionCode = 2
+        versionName = "1.5.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
@@ -59,10 +59,19 @@ android {
     sourceSets {
         getByName("main") {
             python.srcDir("src/main/python")
-            python.srcDir("../../../server")
             assets.srcDir("src/main/assets")
         }
     }
+}
+
+tasks.register<Copy>("syncServerSources") {
+    from("${rootProject.projectDir}/../server")
+    into("${projectDir}/src/main/python/server")
+    duplicatesStrategy = DuplicatesStrategy.INCLUDE
+}
+
+tasks.named("preBuild") {
+    dependsOn("syncServerSources")
 }
 
 dependencies {

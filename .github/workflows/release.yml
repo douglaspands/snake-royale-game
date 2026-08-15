@@ -57,6 +57,11 @@ jobs:
           mkdir -p android/app/src/main/assets/client_dist
           cp -r client/dist/* android/app/src/main/assets/client_dist/
 
+      - name: Sync Python Server to Android Python Sources
+        run: |
+          mkdir -p android/app/src/main/python/server
+          cp -r server/* android/app/src/main/python/server/
+
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
@@ -66,14 +71,15 @@ jobs:
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
 
+      - name: Setup Gradle Build Tool
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "8.7"
+
       - name: Build Android APK with Gradle
         run: |
           cd android
-          if [ ! -f gradlew ]; then
-            gradle wrapper --gradle-version 8.7
-          fi
-          chmod +x gradlew
-          ./gradlew assembleDebug --stacktrace
+          gradle assembleDebug --stacktrace
 
       - name: Prepare Release APK Artifact
         run: |
