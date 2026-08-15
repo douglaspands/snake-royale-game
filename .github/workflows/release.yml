@@ -1,0 +1,100 @@
+name: Release & Build Android APK
+
+on:
+  release:
+    types: [published]
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-release-apk:
+    name: Build Android Host APK & Publish to Release Assets
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "npm"
+          cache-dependency-path: client/package-lock.json
+
+      - name: Install OpenSpec CLI & Validate Specs
+        run: |
+          npm install -g @fission-ai/openspec@latest
+          openspec doctor
+          openspec validate --specs --no-interactive
+
+      - name: Set up Python 3.12 (uv)
+        uses: astral-sh/setup-uv@v3
+        with:
+          version: "latest"
+
+      - name: Run Backend Tests & Coverage Gate
+        run: |
+          uv sync
+          uv run ruff check server
+          uv run ruff format --check server
+          uv run ty check server
+          uv run pytest
+
+      - name: Build Web Client SPA
+        run: |
+          cd client
+          npm ci
+          npm test
+          npm run build
+
+      - name: Sync Web Client to Android Assets
+        run: |
+          mkdir -p android/app/src/main/assets/client_dist
+          cp -r client/dist/* android/app/src/main/assets/client_dist/
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: "temurin"
+          java-version: "17"
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Build Android APK with Gradle
+        run: |
+          cd android
+          if [ ! -f gradlew ]; then
+            gradle wrapper --gradle-version 8.7
+          fi
+          chmod +x gradlew
+          ./gradlew assembleDebug --stacktrace
+
+      - name: Prepare Release APK Artifact
+        run: |
+          mkdir -p release_output
+          VERSION_TAG="${{ github.ref_name }}"
+          if [ -z "$VERSION_TAG" ]; then
+            VERSION_TAG="latest"
+          fi
+          APK_SOURCE="android/app/build/outputs/apk/debug/app-debug.apk"
+          APK_DEST="release_output/snake-royale-server-${VERSION_TAG}.apk"
+          if [ -f "$APK_SOURCE" ]; then
+            cp "$APK_SOURCE" "$APK_DEST"
+          else
+            echo "Searching for generated APK..."
+            find android/app/build/outputs/ -name "*.apk" -exec cp {} release_output/snake-royale-server.apk \;
+          fi
+
+      - name: Upload APK to GitHub Release Assets
+        uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'release'
+        with:
+          files: release_output/*.apk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

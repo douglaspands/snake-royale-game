@@ -9,7 +9,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
 
 from server.app.game.engine import GameEngine
@@ -76,16 +76,56 @@ async def websocket_endpoint(websocket: WebSocket):
         await connection_manager.disconnect(player_id)
 
 
-# Mount static files from client/dist if present
-static_dir = os.path.join(
-    os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "client", "dist"
-)
-if os.path.exists(static_dir):
-    app.mount("/assets", StaticFiles(directory=os.path.join(static_dir, "assets")), name="assets")
+def resolve_static_dir() -> str | None:
+    """
+    Resolves static assets directory across development, production, and Android host environments.
+    """
+    candidates = [
+        os.environ.get("SNAKE_STATIC_DIR"),
+        os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "client", "dist"),
+        os.path.join(os.path.dirname(os.path.dirname(__file__)), "client_dist"),
+        os.path.join(os.path.dirname(__file__), "client_dist"),
+        os.path.abspath("client/dist"),
+        os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "client"),
+        os.path.abspath("client"),
+    ]
+    for candidate in candidates:
+        if candidate and os.path.exists(candidate) and os.path.isdir(candidate):
+            return candidate
+    return None
 
-    @app.get("/{full_path:path}")
-    async def serve_spa(full_path: str):
-        file_path = os.path.join(static_dir, full_path)
-        if os.path.exists(file_path) and os.path.isfile(file_path):
-            return FileResponse(file_path)
-        return FileResponse(os.path.join(static_dir, "index.html"))
+
+# Mount static files from client/dist if present
+static_dir = resolve_static_dir()
+if static_dir is not None:
+    assets_dir = os.path.join(static_dir, "assets")
+    if os.path.exists(assets_dir):
+        app.mount("/assets", StaticFiles(directory=assets_dir), name="assets")
+
+
+@app.get("/{full_path:path}")
+async def serve_spa(full_path: str = ""):
+    current_dir = resolve_static_dir()
+    if current_dir is not None:
+        if full_path:
+            file_path = os.path.join(current_dir, full_path)
+            if os.path.exists(file_path) and os.path.isfile(file_path):
+                return FileResponse(file_path)
+        index_file = os.path.join(current_dir, "index.html")
+        if os.path.exists(index_file):
+            return FileResponse(index_file)
+    return HTMLResponse(
+        content="""<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Snake Battle Royale Multiplayer</title>
+  </head>
+  <body>
+    <div id="app">
+      <canvas id="game-canvas"></canvas>
+    </div>
+  </body>
+</html>""",
+        status_code=200,
+    )

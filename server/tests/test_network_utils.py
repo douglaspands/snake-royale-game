@@ -51,3 +51,21 @@ def test_log_startup_banner_prints_output(capsys):
         captured = capsys.readouterr()
         assert "SNAKE BATTLE ROYALE MULTIPLAYER" in captured.out
         assert "http://10.0.0.15:8000" in captured.out
+
+
+def test_get_local_ip_addresses_with_env_override(monkeypatch):
+    monkeypatch.setenv("SNAKE_HOST_IP", "192.168.43.100")
+    ips = get_local_ip_addresses()
+    assert "192.168.43.100" in ips
+
+
+def test_get_local_ip_addresses_ignores_loopback_env(monkeypatch):
+    monkeypatch.setenv("SNAKE_HOST_IP", "127.0.0.1")
+    with (
+        patch("socket.socket") as mock_sock,
+        patch("socket.gethostname", return_value="localhost"),
+        patch("socket.getaddrinfo", return_value=[]),
+    ):
+        mock_sock.side_effect = Exception("No network route")
+        ips = get_local_ip_addresses()
+        assert "127.0.0.1" not in ips

@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/bg_dark">
+
+    <WebView
+        android:id="@+id/gameWebView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+    <!-- Discrete Exit Button -->
+    <ImageButton
+        android:id="@+id/btnExitGame"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_gravity="top|start"
+        android:layout_margin="12dp"
+        android:background="#660F172A"
+        android:contentDescription="Sair do Jogo"
+        android:src="@android:drawable/ic_menu_close_clear_cancel" />
+
+</FrameLayout>

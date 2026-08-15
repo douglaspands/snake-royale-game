@@ -15,7 +15,9 @@
     "spec:validate": "openspec validate --specs --no-interactive",
     "spec:doctor": "openspec doctor",
     "spec:list": "openspec list",
-    "spec:view": "openspec view"
+    "spec:view": "openspec view",
+    "android:sync-client": "cd client && npm run build && mkdir -p ../android/app/src/main/assets/client_dist && cp -r dist/* ../android/app/src/main/assets/client_dist/",
+    "android:build": "npm run android:sync-client && cd android && ./gradlew assembleDebug"
   },
   "keywords": [
     "snake",
