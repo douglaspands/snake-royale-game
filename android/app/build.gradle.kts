@@ -20,17 +20,6 @@ android {
         ndk {
             abiFilters += listOf("arm64-v8a", "armeabi-v7a", "x86_64")
         }
-
-        python {
-            version = "3.12"
-            pip {
-                install("fastapi>=0.110.0")
-                install("uvicorn>=0.28.0")
-                install("websockets>=12.0")
-                install("pydantic>=2.6.0")
-                install("jsonschema>=4.21.0")
-            }
-        }
     }
 
     buildTypes {
@@ -58,8 +47,25 @@ android {
 
     sourceSets {
         getByName("main") {
-            python.srcDir("src/main/python")
             assets.srcDir("src/main/assets")
+        }
+    }
+}
+
+chaquopy {
+    defaultConfig {
+        version = "3.12"
+        pip {
+            install("fastapi>=0.110.0")
+            install("uvicorn>=0.28.0")
+            install("websockets>=12.0")
+            install("pydantic>=2.6.0")
+            install("jsonschema>=4.21.0")
+        }
+    }
+    sourceSets {
+        getByName("main") {
+            srcDir("src/main/python")
         }
     }
 }
