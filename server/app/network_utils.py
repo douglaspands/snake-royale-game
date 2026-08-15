@@ -4,6 +4,7 @@ interactive multiplayer connection banners.
 """
 
 import logging
+import os
 import socket
 from typing import NamedTuple
 
@@ -17,23 +18,29 @@ class NetworkEndpoints(NamedTuple):
 
 def get_local_ip_addresses() -> list[str]:
     """
-    Discovers active IPv4 addresses on local network interfaces (Wi-Fi / Ethernet),
-    excluding loopback addresses.
+    Discovers active IPv4 addresses on local network interfaces (Wi-Fi / Ethernet / Hotspot),
+    excluding loopback addresses. Supports environment override via SNAKE_HOST_IP.
     """
     ip_list: list[str] = []
 
-    # 1. Primary route discovery via outbound UDP socket probe
-    try:
-        with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
-            s.settimeout(0.5)
-            # Connecting to public DNS (8.8.8.8) does not send actual packets on UDP,
-            # but allows the OS kernel to resolve the primary outbound interface.
-            s.connect(("8.8.8.8", 80))
-            primary_ip = s.getsockname()[0]
-            if primary_ip and primary_ip != "127.0.0.1" and primary_ip not in ip_list:
-                ip_list.append(primary_ip)
-    except Exception:
-        pass
+    # 0. Environment variable override (e.g. passed from Android native layer)
+    env_ip = os.environ.get("SNAKE_HOST_IP") or os.environ.get("HOST_IP")
+    if env_ip and env_ip != "127.0.0.1" and not env_ip.startswith("127."):
+        ip_list.append(env_ip)
+
+    # 1. Primary route discovery via outbound UDP socket probes
+    probe_targets = [("8.8.8.8", 80), ("1.1.1.1", 80)]
+    for target in probe_targets:
+        try:
+            with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
+                s.settimeout(0.5)
+                s.connect(target)
+                primary_ip = s.getsockname()[0]
+                if primary_ip and primary_ip != "127.0.0.1" and primary_ip not in ip_list:
+                    ip_list.append(primary_ip)
+                    break
+        except Exception:
+            continue
 
     # 2. Hostname resolution fallback
     try:

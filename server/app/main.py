@@ -76,16 +76,36 @@ async def websocket_endpoint(websocket: WebSocket):
         await connection_manager.disconnect(player_id)
 
 
+def resolve_static_dir() -> str | None:
+    """
+    Resolves static assets directory across development, production, and Android host environments.
+    """
+    candidates = [
+        os.environ.get("SNAKE_STATIC_DIR"),
+        os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "client", "dist"),
+        os.path.join(os.path.dirname(os.path.dirname(__file__)), "client_dist"),
+        os.path.join(os.path.dirname(__file__), "client_dist"),
+        os.path.abspath("client/dist"),
+    ]
+    for candidate in candidates:
+        if candidate and os.path.exists(candidate) and os.path.isdir(candidate):
+            return candidate
+    return None
+
+
 # Mount static files from client/dist if present
-static_dir = os.path.join(
-    os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "client", "dist"
-)
-if os.path.exists(static_dir):
-    app.mount("/assets", StaticFiles(directory=os.path.join(static_dir, "assets")), name="assets")
+static_dir = resolve_static_dir()
+if static_dir is not None:
+    resolved_dir: str = static_dir
+    assets_dir = os.path.join(resolved_dir, "assets")
+    if os.path.exists(assets_dir):
+        app.mount("/assets", StaticFiles(directory=assets_dir), name="assets")
 
     @app.get("/{full_path:path}")
     async def serve_spa(full_path: str):
-        file_path = os.path.join(static_dir, full_path)
-        if os.path.exists(file_path) and os.path.isfile(file_path):
-            return FileResponse(file_path)
-        return FileResponse(os.path.join(static_dir, "index.html"))
+        if full_path:
+            file_path = os.path.join(resolved_dir, full_path)
+            if os.path.exists(file_path) and os.path.isfile(file_path):
+                return FileResponse(file_path)
+        index_file = os.path.join(resolved_dir, "index.html")
+        return FileResponse(index_file)
