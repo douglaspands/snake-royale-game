@@ -66,4 +66,4 @@
 - [x] 8.1 Author the `android` delta spec: ADDED `REQ-AND-007` and `REQ-AND-008`, MODIFIED `REQ-AND-001` and `REQ-AND-006`
 - [x] 8.2 Author the `harness` delta spec: MODIFIED `REQ-HARN-007`
 - [x] 8.3 Verify the full release pipeline green end to end via `workflow_dispatch` (run [31922834763](https://github.com/douglaspands/snake-royale-game/actions/runs/31922834763)) — APK built, artifact prepared, upload correctly skipped on a non-tag ref, zero annotations
-- [ ] 8.4 Prepare the change summary for the PR description
+- [x] 8.4 Prepare the change summary for the PR description ([PR #4](https://github.com/douglaspands/snake-royale-game/pull/4))
