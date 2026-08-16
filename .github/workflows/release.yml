@@ -83,9 +83,22 @@ jobs:
       - name: Decode Release Keystore
         env:
           ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
         run: |
-          if [ -z "$ANDROID_KEYSTORE_BASE64" ]; then
-            echo "::error::ANDROID_KEYSTORE_BASE64 is not set; the release APK would be unsigned and uninstallable."
+          # An empty secret is indistinguishable from an unset one downstream: the
+          # Gradle resolver silently declines to sign and assembleRelease emits
+          # app-release-unsigned.apk, which only surfaces at the verification gate a
+          # minute later. `gh secret set` stores an empty string when its interactive
+          # prompt runs without a real TTY, so this is a reachable mistake -- fail
+          # here, naming the offending secret.
+          missing=""
+          for var in ANDROID_KEYSTORE_BASE64 ANDROID_KEYSTORE_PASSWORD ANDROID_KEY_ALIAS ANDROID_KEY_PASSWORD; do
+            [ -n "${!var}" ] || missing="$missing $var"
+          done
+          if [ -n "$missing" ]; then
+            echo "::error::Empty or unset signing secret(s):$missing -- the release APK would be unsigned and uninstallable."
             exit 1
           fi
           mkdir -p "$RUNNER_TEMP/signing"
