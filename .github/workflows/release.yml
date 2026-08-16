@@ -204,3 +204,95 @@ jobs:
             release_output/*.sha256
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  build-desktop-executables:
+    name: Build Desktop Executable & Publish to Release Assets
+    # Gated on the Android job so the executables only ever get built from a
+    # codebase that already passed the full test/lint/coverage gate -- this
+    # job does not repeat that gate, it just needs it to have gone green
+    # first. See REQ-DESK-002.
+    needs: build-release-apk
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            asset-os: linux
+            add-data-sep: ":"
+          - os: windows-latest
+            asset-os: windows
+            add-data-sep: ";"
+          - os: macos-latest
+            asset-os: macos
+            add-data-sep: ":"
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v5
+
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v5
+        with:
+          node-version: 20
+          cache: "npm"
+          cache-dependency-path: client/package-lock.json
+
+      - name: Set up Python 3.12 (uv)
+        uses: astral-sh/setup-uv@v7
+        with:
+          version: "latest"
+
+      - name: Install Backend Dependencies (incl. PyInstaller build group)
+        run: uv sync --group build
+
+      - name: Build Web Client SPA
+        run: |
+          cd client
+          npm ci
+          npm run build
+
+      # onefile bundles the interpreter, the server package and the compiled
+      # SPA into a single binary -- no Node.js, Python or manual setup needed
+      # on the end-user machine. See REQ-DESK-001 / REQ-DESK-002. The
+      # --add-data separator differs by OS (':' on Linux/macOS, ';' on
+      # Windows), hence the matrix-provided add-data-sep.
+      - name: Build Desktop Executable with PyInstaller
+        shell: bash
+        run: |
+          uv run pyinstaller --onefile \
+            --name "snake-royale-desktop-${{ matrix.asset-os }}" \
+            --add-data "client/dist${{ matrix.add-data-sep }}client_dist" \
+            --paths . \
+            server/app/__main__.py
+
+      - name: Generate Checksum
+        shell: bash
+        run: |
+          mkdir -p release_output
+          cd dist
+          for f in snake-royale-desktop-*; do
+            cp "$f" "../release_output/$f"
+          done
+          cd ../release_output
+          for f in snake-royale-desktop-*; do
+            sha256sum "$f" > "$f.sha256" 2>/dev/null || shasum -a 256 "$f" > "$f.sha256"
+          done
+          cat ./*.sha256
+
+      - name: Upload Desktop Executable as Workflow Artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: snake-royale-desktop-${{ matrix.asset-os }}-${{ github.sha }}
+          path: |
+            release_output/snake-royale-desktop-*
+          retention-days: 14
+          if-no-files-found: error
+
+      - name: Upload Desktop Executable to GitHub Release Assets
+        uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'release'
+        with:
+          files: |
+            release_output/snake-royale-desktop-*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

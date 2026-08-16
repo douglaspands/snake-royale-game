@@ -216,3 +216,51 @@ sha256sum -c snake-royale-server-vX.Y.Z.apk.sha256        # download íntegro?
 apksigner verify --print-certs --verbose *.apk            # v2/v3, signer != CN=Android Debug
 aapt dump badging *.apk | grep -E "^package:|debuggable"  # sem .debug, sem debuggable
 ```
+
+---
+
+## 🖥️ 9. Rodando o build desktop
+
+Toda *GitHub Release* também publica um executável desktop single-file (Linux,
+Windows e macOS), gerado com [PyInstaller](https://pyinstaller.org/) a partir do
+mesmo `server/app/__main__.py` que serve o servidor Starlette/Uvicorn embutido —
+sem exigir Node.js, interpretador Python ou qualquer setup manual na máquina do
+usuário final. Ver `REQ-DESK-001` / `REQ-DESK-002`.
+
+Ao executar o binário (`snake-royale-desktop-linux`, `snake-royale-desktop-windows.exe`
+ou `snake-royale-desktop-macos`):
+
+1. O servidor sobe em `0.0.0.0:8000`, acessível também por outros dispositivos na
+   mesma rede local (mesmo esquema de LAN IP do banner do `npm run dev`).
+2. Assim que o endpoint `/health` responde com sucesso — via *polling* em
+   intervalos curtos, nunca um `sleep` fixo — o navegador padrão do sistema abre
+   automaticamente em `http://localhost:8000`.
+
+### Baixando e executando
+
+```bash
+# 1. Baixe o executável e o .sha256 correspondentes na página da Release
+# 2. Confira a integridade do download
+sha256sum -c snake-royale-desktop-linux.sha256   # ou shasum -a 256 -c no macOS
+
+# 3. Torne executável (Linux/macOS) e rode
+chmod +x snake-royale-desktop-linux
+./snake-royale-desktop-linux
+```
+
+### Sem assinatura de código
+
+Os executáveis **não são assinados nem notarizados** — publicar a release não
+depende de certificado de code-signing. Isso faz o sistema operacional exibir um
+aviso de "aplicativo não confiável" no primeiro uso; não é malware, é apenas a
+ausência de assinatura. Contorne com um clique:
+
+- **Windows (SmartScreen):** ao rodar o `.exe`, clique em **"Mais informações"**
+  e depois em **"Executar assim mesmo"**.
+- **macOS (Gatekeeper):** clique com o botão direito no binário → **"Abrir"** →
+  confirme **"Abrir"** na caixa de diálogo. Alternativa via terminal:
+  ```bash
+  xattr -d com.apple.quarantine snake-royale-desktop-macos
+  ```
+- **Linux:** nenhum aviso equivalente — apenas garanta a permissão de execução
+  (`chmod +x`).
