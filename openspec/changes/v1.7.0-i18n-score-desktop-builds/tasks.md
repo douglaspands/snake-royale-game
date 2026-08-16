@@ -99,7 +99,7 @@ Allowlist: `server/app/__main__.py` (new), `pyproject.toml` (a `dev`/`build` dep
 - [x] 5.2 Run `npm test` (root gate: pytest + vitest + openspec validate)
 - [x] 5.3 Run `npm run lint` (`ruff check` + `ruff format --check` + `ty check`)
 - [x] 5.4 Push a branch and let CI run the new `build-desktop-executables` matrix via `workflow_dispatch` (or an equivalent dry run) to confirm all three OS builds succeed before tagging a real release — mirrors the `v1.5.4` precedent of dry-running the release workflow before publishing
-- [ ] 5.5 Update the version identity in `openspec/config.yaml`, `package.json`, `pyproject.toml`, `README.md` and `android/app/build.gradle.kts` (`versionCode`/`versionName`) to `1.7.0`
+- [x] 5.5 Update the version identity in `openspec/config.yaml`, `package.json`, `pyproject.toml`, `README.md` and `android/app/build.gradle.kts` (`versionCode`/`versionName`) to `1.7.0`
 
 ## 6. Node VAL — Validation *(user + CI artifacts)*
 
