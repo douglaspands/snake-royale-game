@@ -1,6 +1,6 @@
 [project]
 name = "snake-royale"
-version = "1.0.0"
+version = "1.5.3"
 description = "Real-time Multiplayer Snake Battle Royale Game (SDD + Graph Engineering)"
 readme = "README.md"
 requires-python = ">=3.12"

@@ -12,13 +12,15 @@ android {
         applicationId = "com.snakeroyale.host"
         minSdk = 24
         targetSdk = 34
-        versionCode = 2
-        versionName = "1.5.1"
+        versionCode = 3
+        versionName = "1.5.3"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
+        // Chaquopy ships no Python 3.12 runtime for 32-bit ARM; adding armeabi-v7a
+        // here fails the Gradle configuration phase. See REQ-AND-007.
         ndk {
-            abiFilters += listOf("arm64-v8a", "armeabi-v7a", "x86_64")
+            abiFilters += listOf("arm64-v8a", "x86_64")
         }
     }
 

@@ -44,6 +44,9 @@ Thumbs.db
 *.swp
 *.swo
 
+# AI agent local overrides (shared config in .claude/ stays versioned)
+.claude/settings.local.json
+
 # Environment
 .env
 .env.local

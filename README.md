@@ -116,12 +116,18 @@ Todas as funcionalidades são formalmente especificadas antes da escrita de cód
 - [`docs/SPEC_DRIVEN_DEVELOPMENT.md`](file:///home/douglas/Workspace/claude/snake-game/docs/SPEC_DRIVEN_DEVELOPMENT.md): Guia prático da metodologia SDD e comandos OpenSpec.
 - [`docs/LATENCY_AND_COMMAND_TUNING.md`](file:///home/douglas/Workspace/claude/snake-game/docs/LATENCY_AND_COMMAND_TUNING.md): Guia do motor de baixa latência e CSP.
 
-### 🤖 Comandos para Google Antigravity (Slash Commands & Workflows)
+### 🤖 Comandos para Agentes de IA (Slash Commands & Workflows)
+
+Disponíveis tanto no **Google Antigravity** (via [`.agent/`](file:///home/douglas/Workspace/claude/snake-game/.agent/)) quanto no **Claude Code** (via [`.claude/`](file:///home/douglas/Workspace/claude/snake-game/.claude/)):
+
 - `/opsx-propose "descrição"`: Criar nova proposta de especificação.
 - `/opsx-apply "change-id"`: Implementar mudança orientada por TDD e DAG.
+- `/opsx-update "change-id"`: Revisar os artefatos de planejamento de uma change.
 - `/opsx-sync`: Sincronizar especificações com o código-fonte.
 - `/opsx-archive "change-id"`: Arquivar e promover especificação ratificada.
 - `/opsx-explore "tópico"`: Investigar arquitetura ou alinhar ideias.
+
+Instruções de projeto por agente: [`GEMINI.md`](file:///home/douglas/Workspace/claude/snake-game/GEMINI.md) (Antigravity) e [`CLAUDE.md`](file:///home/douglas/Workspace/claude/snake-game/CLAUDE.md) (Claude Code).
 
 ---
 
