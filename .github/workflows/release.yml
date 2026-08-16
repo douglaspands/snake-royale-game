@@ -180,6 +180,21 @@ jobs:
           for f in *.apk; do sha256sum "$f" > "$f.sha256"; done
           cat ./*.sha256
 
+      # Release assets are only written on a tag, so a workflow_dispatch dry-run
+      # would otherwise leave the APK unreachable -- and the point of a dry-run is
+      # to install it on a real device before publishing anything.
+      - name: Upload APK as Workflow Artifact
+        # v6 is the lowest major on the node24 runtime (v4 and v5 are node20),
+        # matching the pinning rule REQ-AND-006 applies to every other action.
+        uses: actions/upload-artifact@v6
+        with:
+          name: snake-royale-apk-${{ github.sha }}
+          path: |
+            release_output/*.apk
+            release_output/*.sha256
+          retention-days: 14
+          if-no-files-found: error
+
       - name: Upload APK to GitHub Release Assets
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'release'
