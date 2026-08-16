@@ -5,6 +5,7 @@
 import { InterpolatedWorld } from '../net/interpolator';
 import { PlayerDeathPayload } from '../net/ws_client';
 import { SKINS } from '../render/renderer';
+import { t } from '../i18n';
 
 export class HUDManager {
   private _container: HTMLElement;
@@ -17,6 +18,8 @@ export class HUDManager {
   private _selectedSkin: string = 'neon_cyan';
 
   constructor(container: HTMLElement = document.body) {
+    document.title = t.pageTitle;
+
     this._container = container;
     this._lobbyEl = document.getElementById('lobby-overlay') || this._createLobby();
     this._gameOverEl = document.getElementById('game-over-modal') || this._createGameOver();
@@ -49,16 +52,16 @@ export class HUDManager {
 
     el.innerHTML = `
       <div class="lobby-card">
-        <h1 class="game-title">🐍 Snake Royale</h1>
-        <p class="subtitle">Multiplayer Battle Royale Arena (10+ Players)</p>
-        
+        <h1 class="game-title">${t.gameTitle}</h1>
+        <p class="subtitle">${t.subtitle}</p>
+
         <div class="form-group">
-          <label for="nickname-input">Choose Nickname</label>
-          <input type="text" id="nickname-input" maxlength="16" placeholder="Enter your nickname..." value="Viper${Math.floor(Math.random() * 900 + 100)}" />
+          <label for="nickname-input">${t.nicknameLabel}</label>
+          <input type="text" id="nickname-input" maxlength="16" placeholder="${t.nicknamePlaceholder}" value="${t.defaultNickname}${Math.floor(Math.random() * 900 + 100)}" />
         </div>
 
         <div class="form-group">
-          <label>Select Skin (${skinKeys.length} Mixed & Patterned Styles)</label>
+          <label>${t.skinSelectLabel.replace('{count}', String(skinKeys.length))}</label>
           <div class="skin-selector" id="skin-selector">
             ${skinKeys
               .map((k) => {
@@ -74,11 +77,11 @@ export class HUDManager {
           </div>
         </div>
 
-        <button id="play-btn" class="primary-btn">ENTER ARENA</button>
+        <button id="play-btn" class="primary-btn">${t.enterArena}</button>
 
         <div class="controls-hint">
-          <span>🖥️ <b>PC:</b> Mouse / WASD + Space / Left-Click (Turbo > 3.0 Mass)</span>
-          <span>📱 <b>Mobile / Tablet:</b> Drag + Double-Tap & Hold (Turbo)</span>
+          <span>${t.controlsHintDesktop}</span>
+          <span>${t.controlsHintMobile}</span>
         </div>
       </div>
     `;
@@ -92,15 +95,15 @@ export class HUDManager {
     el.className = 'ui-modal hidden';
     el.innerHTML = `
       <div class="modal-card">
-        <h2 class="eliminated-title">💀 ELIMINATED</h2>
-        <p id="killer-text" class="modal-sub">Defeated by Arena Boundary</p>
+        <h2 class="eliminated-title">${t.eliminatedTitle}</h2>
+        <p id="killer-text" class="modal-sub">${t.defeatedByBoundary}</p>
         <div class="modal-stats">
           <div class="stat-item">
-            <span class="stat-lbl">Final Score</span>
+            <span class="stat-lbl">${t.finalScoreLabel}</span>
             <span id="final-score-val" class="stat-val">0</span>
           </div>
         </div>
-        <button id="respawn-btn" class="primary-btn">RESPAWN NOW</button>
+        <button id="respawn-btn" class="primary-btn">${t.respawnNow}</button>
       </div>
     `;
     this._container.appendChild(el);
@@ -112,7 +115,7 @@ export class HUDManager {
     el.id = 'leaderboard-card';
     el.className = 'hud-card leaderboard-box';
     el.innerHTML = `
-      <div class="card-header">🏆 TOP VIPERS</div>
+      <div class="card-header">${t.leaderboardTitle}</div>
       <div id="leaderboard-entries" class="leaderboard-list"></div>
     `;
     this._container.appendChild(el);
@@ -124,8 +127,8 @@ export class HUDManager {
     el.id = 'stats-card';
     el.className = 'hud-card stats-box';
     el.innerHTML = `
-      <div class="stat-row"><span>SCORE:</span> <b id="stat-score">0</b></div>
-      <div class="stat-row"><span>RANK:</span> <b id="stat-rank">#--</b></div>
+      <div class="stat-row"><span>${t.scoreStatLabel}</span> <b id="stat-score">0</b></div>
+      <div class="stat-row"><span>${t.rankStatLabel}</span> <b id="stat-rank">#--</b></div>
     `;
     this._container.appendChild(el);
     return el;
@@ -147,7 +150,7 @@ export class HUDManager {
 
     if (playBtn) {
       playBtn.addEventListener('click', () => {
-        const name = nickInput ? nickInput.value.trim() || 'Viper' : 'Viper';
+        const name = nickInput ? nickInput.value.trim() || t.defaultNickname : t.defaultNickname;
         this.hideLobby();
         if (this.onPlayClick) this.onPlayClick(name, this._selectedSkin);
       });
@@ -173,9 +176,9 @@ export class HUDManager {
     const killerTxt = document.getElementById('killer-text');
     const scoreVal = document.getElementById('final-score-val');
     if (killerTxt) {
-      killerTxt.textContent = death.killerName
-        ? `Defeated by ${death.killerName}`
-        : `Defeated by Arena Boundary`;
+      killerTxt.textContent = death.killerId
+        ? t.defeatedByPlayer.replace('{killer}', death.killerName ?? '')
+        : t.defeatedByBoundary;
     }
     if (scoreVal) {
       scoreVal.textContent = death.finalScore.toLocaleString();

@@ -136,8 +136,8 @@ class Snake:
         # 4. Update body trajectory with inverse kinematics / distance spacing
         self._update_trajectory()
 
-        # 5. Update score
-        self.score = max(self.score, int(self.mass * 10))
+        # 5. Update score — always derived from current mass, never a historical max
+        self.score = int(self.mass * 10)
 
         return dropped_pellets
 
@@ -174,7 +174,7 @@ class Snake:
     def add_mass(self, amount: float) -> None:
         """Increases snake mass."""
         self.mass += amount
-        self.score = max(self.score, int(self.mass * 10))
+        self.score = int(self.mass * 10)
 
     def get_body_segments(self) -> list[Vector2D]:
         """Returns list of body segment points (excluding the head at index 0)."""

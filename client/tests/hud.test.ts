@@ -5,6 +5,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { HUDManager } from '../src/ui/hud';
 import { InterpolatedWorld } from '../src/net/interpolator';
+import { t } from '../src/i18n';
 
 class MockHTMLElement {
   public id: string = '';
@@ -84,6 +85,9 @@ describe('HUDManager UI Components', () => {
     const hud = new HUDManager(mockContainer);
     expect(hud).toBeDefined();
 
+    // REQ-HUD-004: the resolved locale's page title is applied at startup.
+    expect(document.title).toBe(t.pageTitle);
+
     hud.showLobby();
     hud.hideLobby();
 
@@ -94,6 +98,9 @@ describe('HUDManager UI Components', () => {
       finalScore: 1250,
       mass: 55.0,
     });
+    expect(document.getElementById('killer-text')?.textContent).toBe(
+      t.defeatedByPlayer.replace('{killer}', 'Nemesis')
+    );
     hud.hideGameOver();
 
     // Game over with boundary death
@@ -104,6 +111,20 @@ describe('HUDManager UI Components', () => {
       finalScore: 0,
       mass: 10.0,
     });
+    expect(document.getElementById('killer-text')?.textContent).toBe(t.defeatedByBoundary);
+    hud.hideGameOver();
+
+    // Boundary death as sent by the server: killerId null, killerName the literal "Arena Boundary".
+    // Regression guard for a bug where the boundary case was detected off killerName's
+    // truthiness instead of killerId, producing an untranslated "Derrotado por Arena Boundary".
+    hud.showGameOver({
+      type: 'PLAYER_DEATH',
+      killerId: null,
+      killerName: 'Arena Boundary',
+      finalScore: 90,
+      mass: 9.0,
+    });
+    expect(document.getElementById('killer-text')?.textContent).toBe(t.defeatedByBoundary);
   });
 
   it('should handle skin button clicks and selection', () => {

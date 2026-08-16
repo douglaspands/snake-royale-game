@@ -1,6 +1,6 @@
 [project]
 name = "snake-royale"
-version = "1.6.1"
+version = "1.7.0"
 description = "Real-time Multiplayer Snake Battle Royale Game (SDD + Graph Engineering)"
 readme = "README.md"
 requires-python = ">=3.12"
@@ -21,6 +21,14 @@ dev = [
     # Test harness only (server/tests/harness/schema_validator.py); never bundled
     # into the Android APK -- it pulls rpds-py, a Rust package with no Chaquopy wheel.
     "jsonschema>=4.21.0",
+]
+# Build-only tool for packaging the desktop executable (server/app/__main__.py)
+# via `uv run pyinstaller`, see REQ-DESK-002. Never referenced by the Chaquopy
+# `pip { install(...) }` block in android/app/build.gradle.kts -- that block is
+# a runtime dependency list baked into the Android APK, and PyInstaller must
+# never ship inside it.
+build = [
+    "pyinstaller>=6.11.0",
 ]
 
 [tool.pytest.ini_options]

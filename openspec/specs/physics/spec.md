@@ -11,7 +11,7 @@ The physics simulation SHALL maintain a 2D bounding arena of 3000x3000 pixels wh
 - **THEN** the snake status transitions to dead and corpse pellets spawn
 
 ### Requirement: REQ-PHYS-002 Locomotion and Boost Dynamics
-The engine SHALL propel snakes at base speed 180 px/s and turbo boost speed 360 px/s when mass exceeds minimum threshold 3.0.
+The engine SHALL propel snakes at base speed 180 px/s and turbo boost speed 360 px/s when mass exceeds minimum threshold 3.0. The player's score MUST be derived directly from current mass at all times (`score = floor(mass * 10)`), so that any mass reduction — including boost's mass drain — is reflected as an equivalent, immediate score reduction. Score MUST NOT be retained as a historical maximum once mass has decreased; the snake's visible size MUST always match the score driving the leaderboard.
 
 #### Scenario: Boost acceleration and mass drain
 - **WHEN** player activates boost with mass > 3.0
@@ -20,6 +20,11 @@ The engine SHALL propel snakes at base speed 180 px/s and turbo boost speed 360 
 #### Scenario: Boost cutoff at minimum mass
 - **WHEN** boosting snake mass reaches 3.0
 - **THEN** boost is automatically disabled and speed reverts to 180 px/s
+
+#### Scenario: Boost drain reduces score in lockstep with mass
+- **GIVEN** a boosting snake sheds mass from 10.0 to 8.0
+- **WHEN** the engine recomputes score after the drain
+- **THEN** score decreases from 100 to 80, exactly `floor(mass * 10)` for the new mass, with no historical maximum preserved
 
 ### Requirement: REQ-PHYS-003 Dynamic Agile Turn Rate
 The engine SHALL calculate maximum turning rate dynamically as a decreasing function of snake mass, ranging from 9.8 rad/s at spawn down to 5.2 rad/s for large snakes.
