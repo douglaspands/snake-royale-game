@@ -121,7 +121,9 @@ Allowlist: `server/app/__main__.py` (new), `pyproject.toml` (a `dev`/`build` dep
 
 ## 7. Node DOC — Spec Sync & Archive *(orchestrator)*
 
-- [ ] 7.1 Run `/opsx-sync` to merge `REQ-HUD-004` into `openspec/specs/hud/spec.md`, the modified `REQ-PHYS-002` into `openspec/specs/physics/spec.md`, and create `openspec/specs/desktop/spec.md` with `REQ-DESK-001`/`REQ-DESK-002`
-- [ ] 7.2 Run `npm run spec:doctor` and confirm no orphaned or duplicated requirement identifiers
+- [x] 7.1 Run `/opsx-sync` to merge `REQ-HUD-004` into `openspec/specs/hud/spec.md`, the modified `REQ-PHYS-002` into `openspec/specs/physics/spec.md`, and create `openspec/specs/desktop/spec.md` with `REQ-DESK-001`/`REQ-DESK-002`
+  - Done, commit `b40a2fb`. `openspec validate --specs` passed 8/8.
+- [x] 7.2 Run `npm run spec:doctor` and confirm no orphaned or duplicated requirement identifiers
+  - Clean: "OpenSpec root: ok", no orphaned references reported.
 - [ ] 7.3 Archive as `openspec/changes/archive/AAAA-MM-DD-v1.7.0-i18n-score-desktop-builds/`
 - [ ] 7.4 Tag and publish release `v1.7.0`, then verify all published assets (Android APK, Linux/Windows/macOS executables, and every `.sha256`) and their checksums
