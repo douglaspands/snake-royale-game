@@ -57,12 +57,14 @@ android {
 chaquopy {
     defaultConfig {
         version = "3.12"
+        // Every package here must be pure Python: Chaquopy can only install native
+        // packages it has prebuilt wheels for, and it has none for the Rust extensions
+        // behind pydantic (pydantic-core) or jsonschema (rpds-py). The server targets
+        // Starlette directly for exactly this reason -- see REQ-AND-008.
         pip {
-            install("fastapi>=0.110.0")
+            install("starlette>=0.36.0")
             install("uvicorn>=0.28.0")
             install("websockets>=12.0")
-            install("pydantic>=2.6.0")
-            install("jsonschema>=4.21.0")
         }
     }
     sourceSets {

@@ -38,7 +38,7 @@ Para manter 100% de aderência às ferramentas:
 ### 2.2 Ordenação e Agrupamento de Imports (isort / `I001`)
 Todos os arquivos Python devem seguir a convenção de três blocos separados por uma linha em branco:
 1. Biblioteca padrão do Python (`math`, `asyncio`, `time`, `typing`).
-2. Dependências de terceiros (`fastapi`, `pytest`, `pydantic`).
+2. Dependências de terceiros (`starlette`, `uvicorn`, `pytest`).
 3. Módulos locais do projeto (`server.app.game.*`, `server.tests.*`).
 
 ---

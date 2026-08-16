@@ -25,7 +25,7 @@ Backend isolado: `uv run pytest` · Frontend isolado: `cd client && npm test`
 
 ## 🗺️ Arquitetura
 
-- **`server/`** — FastAPI + Uvicorn + WebSockets; loop autoritativo de 30-40 Hz. Serve também os assets compilados do client (servidor unificado, porta 8000).
+- **`server/`** — Starlette + Uvicorn + WebSockets; loop autoritativo de 30-40 Hz. Serve também os assets compilados do client (servidor unificado, porta 8000).
 - **`client/`** — Vite + TypeScript + Canvas 2D (60-120 FPS); interpolação LERP adaptativa com Client-Side Prediction.
 - **`android/`** — App host que embarca o servidor Python via **Chaquopy** (Kotlin DSL, bloco `chaquopy { }`).
 - **`openspec/specs/<capacidade>/spec.md`** — specs canônicas. Capacidades: `android`, `harness`, `hud`, `lifecycle`, `physics`, `protocol`, `rendering`.

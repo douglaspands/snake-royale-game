@@ -18,7 +18,40 @@ The Android host application MUST be compiled exclusively for the `arm64-v8a` an
 - **WHEN** the Chaquopy Python version bundled into the APK is selected
 - **THEN** it MUST be a version satisfying that same constraint, so the server executes on the interpreter its test and type gates validated
 
+### Requirement: REQ-AND-008 Pure-Python Dependency Constraint for the Embedded Server
+Every Python package bundled into the Android host APK via the Chaquopy `pip { install(...) }` block MUST be installable as a pure-Python wheel, or be a native package for which Chaquopy publishes a prebuilt wheel. The server MUST NOT depend, directly or transitively, on a native extension absent from the Chaquopy package repository. Test-only dependencies MUST be declared in the `dev` dependency group of `pyproject.toml` and MUST NOT appear in the Chaquopy install list.
+
+#### Scenario: Server runtime dependencies resolve to pure-Python wheels
+- **GIVEN** the Chaquopy install list declares `starlette`, `uvicorn` and `websockets`
+- **WHEN** the `:app:generateDebugPythonRequirements` task resolves the dependency tree
+- **THEN** every package resolves to a `py3-none-any` wheel, no source distribution requires a compiler toolchain, and the task completes successfully
+
+#### Scenario: Pydantic-backed validation layer is excluded
+- **GIVEN** `pydantic` v2 requires the Rust extension `pydantic-core`, for which Chaquopy publishes no wheel
+- **WHEN** the server's HTTP and WebSocket layer is implemented
+- **THEN** it MUST target Starlette directly rather than FastAPI, so that no pydantic dependency enters the tree and the backend and the APK run the identical dependency set
+
+#### Scenario: Test-only dependencies stay out of the APK
+- **GIVEN** `jsonschema` is used exclusively by `server/tests/harness/schema_validator.py` and pulls the Rust extension `rpds-py`
+- **WHEN** the Android APK dependency list is assembled
+- **THEN** `jsonschema` is absent from the Chaquopy `pip` block and declared only in the `dev` dependency group, leaving the packet-schema test gate fully functional in CI
+
 ## MODIFIED Requirements
+
+### Requirement: REQ-AND-001 Android Foreground Service Lifecycle
+The Android application MUST execute the Starlette + Uvicorn server and Game Loop inside an Android `ForegroundService` with an ongoing, persistent system notification.
+
+#### Scenario: Server service startup
+- **WHEN** the user starts the server or launches the host application
+- **THEN** the ForegroundService transitions to active state, displays a persistent notification with the server IP, and starts the Python ASGI event loop
+
+#### Scenario: Background persistence under screen lock
+- **WHEN** the host device screen is locked or the user switches to another application
+- **THEN** the ForegroundService keeps running without process termination by the Android OS
+
+#### Scenario: Clean server service shutdown
+- **WHEN** the user stops the server or dismisses the service from the notification action
+- **THEN** the server shuts down gracefully, releasing all socket bindings and notification resources
 
 ### Requirement: REQ-AND-006 Automated GitHub Release Pipeline & APK Asset Generation
 The CI/CD pipeline on GitHub Actions MUST automatically validate tests, setup the Gradle runtime environment via `gradle/actions/setup-gradle` (Gradle 8.7), compile precompiled web assets, synchronize Python backend sources to the Chaquopy source tree via the Kotlin-DSL-compliant `chaquopy { }` configuration block, compile the Android APK for the ABI matrix defined in `REQ-AND-007`, and attach the `.apk` package to the GitHub Release Assets upon publishing a GitHub Release. Every GitHub Action referenced by the workflow MUST be pinned to a major version whose `action.yml` declares a supported Node runtime (`node24`), so the pipeline produces no runtime deprecation annotations. The APK's `versionCode` and `versionName` MUST be kept in sync with the published release tag.

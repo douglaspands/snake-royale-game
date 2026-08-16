@@ -5,11 +5,9 @@ description = "Real-time Multiplayer Snake Battle Royale Game (SDD + Graph Engin
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
-    "fastapi>=0.110.0",
+    "starlette>=0.36.0",
     "uvicorn[standard]>=0.28.0",
     "websockets>=12.0",
-    "pydantic>=2.6.0",
-    "jsonschema>=4.21.0",
 ]
 
 [dependency-groups]
@@ -20,6 +18,9 @@ dev = [
     "httpx>=0.27.0",
     "ruff>=0.16.3",
     "ty>=0.0.71",
+    # Test harness only (server/tests/harness/schema_validator.py); never bundled
+    # into the Android APK -- it pulls rpds-py, a Rust package with no Chaquopy wheel.
+    "jsonschema>=4.21.0",
 ]
 
 [tool.pytest.ini_options]
