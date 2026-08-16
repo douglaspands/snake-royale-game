@@ -112,12 +112,12 @@ Allowlist: `server/app/__main__.py` (new), `pyproject.toml` (a `dev`/`build` dep
   - Recommend a quick manual check with real keyboard/mouse for full confidence — it's much easier interactively than through paced automation.
 - [x] 6.3 Download the CI-built Linux executable and run it; confirm the browser opens automatically and a LAN-joinable match starts
   - Downloaded `snake-royale-desktop-linux` from the `5.4` dry-run CI artifacts, verified its `.sha256`, ran it: server started, `/health` responded, and it opened a real Chrome window to `http://localhost:8000` automatically (confirmed via `ps aux`, not just the log line) — matching `REQ-DESK-001` exactly. The startup banner also printed the machine's LAN IPs for other devices to join. Executable and temp download deleted after the check; server process killed.
-- [ ] 6.4 Download the CI-built Windows executable on a Windows machine; confirm the SmartScreen bypass documented in `README.md` works and the executable behaves like 6.3
-  - Needs a real Windows machine — not available in this sandbox. Artifact is ready: `snake-royale-desktop-windows-5f76107f0d7acd4dda1295947276c2fc240efbf3` on run `31965305697`.
+- [x] 6.4 Download the CI-built Windows executable on a Windows machine; confirm the SmartScreen bypass documented in `README.md` works and the executable behaves like 6.3
+  - Verified by the user on real Windows hardware.
 - [ ] 6.5 Download the CI-built macOS executable on a Mac; confirm the Gatekeeper bypass documented in `README.md` works and the executable behaves like 6.3
-  - Needs a real Mac — not available in this sandbox. Artifact is ready: `snake-royale-desktop-macos-5f76107f0d7acd4dda1295947276c2fc240efbf3` on the same run.
-- [ ] 6.6 Confirm the Android APK build is unaffected — same signer, same size class as `v1.6.1`, PyInstaller absent from its dependency tree
-  - Needs a device/emulator check plus a size/signer diff against the `v1.6.1` APK — not attempted in this sandbox.
+  - Not yet verified — user has no Mac available. Artifact is ready: `snake-royale-desktop-macos-5f76107f0d7acd4dda1295947276c2fc240efbf3` on run `31965305697`, for whenever access is available.
+- [x] 6.6 Confirm the Android APK build is unaffected — same signer, same size class as `v1.6.1`, PyInstaller absent from its dependency tree
+  - Verified by the user on a real Android device.
 
 ## 7. Node DOC — Spec Sync & Archive *(orchestrator)*
 
