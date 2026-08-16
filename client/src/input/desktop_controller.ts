@@ -8,7 +8,6 @@ export class DesktopController {
   private _prevNotifiedAngle: number = 0.0;
   private _boost: boolean = false;
   private _keysDown: Set<string> = new Set();
-  private _useKeyboard: boolean = false;
   private _targetElement: HTMLElement | Window | null = null;
 
   public onInputChange?: (angle: number, boost: boolean) => void;
@@ -42,13 +41,14 @@ export class DesktopController {
       this._notifyChange(true);
     });
 
-    window.addEventListener('mousemove', (e: MouseEvent) => {
-      if (!this._useKeyboard) {
-        const cx = window.innerWidth / 2;
-        const cy = window.innerHeight / 2;
-        this._angle = Math.atan2(e.clientY - cy, e.clientX - cx);
-        this._notifyChange(false);
-      }
+    // Only genuine mouse pointers steer the desktop aim: touch/pen pointers belong
+    // to the virtual joystick and must never overwrite this angle (REQ-PROTO-007).
+    window.addEventListener('pointermove', (e: PointerEvent) => {
+      if (e.pointerType !== 'mouse') return;
+      const cx = window.innerWidth / 2;
+      const cy = window.innerHeight / 2;
+      this._angle = Math.atan2(e.clientY - cy, e.clientX - cx);
+      this._notifyChange(false);
     });
 
     window.addEventListener('mousedown', (e: MouseEvent) => {
@@ -64,12 +64,6 @@ export class DesktopController {
         this._notifyChange(true);
       }
     });
-  }
-
-  public setMousePosition(screenX: number, screenY: number, centerX: number, centerY: number): void {
-    this._useKeyboard = false;
-    this._angle = Math.atan2(screenY - centerY, screenX - centerX);
-    this._notifyChange(false);
   }
 
   private _notifyChange(force: boolean = false): void {
@@ -92,7 +86,6 @@ export class DesktopController {
     if (this._keysDown.has('KeyD') || this._keysDown.has('ArrowRight')) dx += 1;
 
     if (dx !== 0 || dy !== 0) {
-      this._useKeyboard = true;
       this._angle = Math.atan2(dy, dx);
     }
   }

@@ -70,6 +70,20 @@ Padrão estabelecido nas releases 1.5.x (ver `openspec/changes/archive/`):
 
 ---
 
+## 🧩 Execução paralela com sub-agentes
+
+Quando uma change toca conjuntos de arquivos disjuntos (ex.: `android/` + `client/`), o `tasks.md` divide o DAG em **lanes** executadas por sub-agentes concorrentes. Referência viva: `openspec/changes/v1.6.1-hotfix-mobile-gameplay/`.
+
+- **`Node 0` é bloqueante e roda no orquestrador.** Nenhuma lane começa antes de `npm run spec:validate` passar — a regra SDD não admite código antes da spec validada.
+- **Worktrees de lane nascem da branch default, não do seu `HEAD`.** Na `v1.6.1` as três saíram de `origin/main` (`a81dbb4`), sem o trabalho de v1.5.4/v1.5.5/v1.6.0 que estava só na branch de feature. **Enquanto a feature não estiver mergeada na default, confira `git worktree list` e `git log --oneline -1 <branch-da-worktree>` antes de aceitar qualquer lane**, e gere o patch de cada uma com `git diff <HEAD-correto> -- <apenas os arquivos do allowlist dela>` — sem restringir aos arquivos da lane, o diff reverte o trabalho das outras releases.
+- **Uma lane = um requisito.** Cada lane é dona de exatamente um `REQ-*` e é lançada com `isolation: "worktree"`, para não enxergar trabalho parcial das outras.
+- **Contrato de lane no `design.md`:** tabela com *sub-agente · requisito · allowlist de arquivos · denylist*. Lane que precisa cruzar a fronteira **para e reporta**, não edita.
+- **Lanes não rodam o gate raiz.** O worktree de uma lane contém só um pedaço da change; `npm test` e `npm run lint` são do `Node INT`, sobre a árvore já mesclada.
+- **Ordem de merge explícita** quando duas lanes tocam o mesmo arquivo em regiões distintas — declare quem entra primeiro e quem rebaseia.
+- **Nós que ficam no orquestrador:** `0`, `MERGE`, `INT`, `VAL` (validação em device físico) e `DOC`.
+
+---
+
 ## 🪶 Eficiência de tokens
 
 1. Respeite `.ignore`, `.antigravityignore` e `.cursorignore` — nunca leia bundles (`client/dist/`), caches, coverage ou lockfiles (`uv.lock`, `package-lock.json`).

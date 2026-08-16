@@ -2,6 +2,16 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { DesktopController } from '../src/input/desktop_controller';
 import { VirtualJoystick } from '../src/input/virtual_joystick';
 
+/** Builds a synthetic pointermove carrying an explicit pointerType. */
+function pointerMove(pointerType: string, clientX: number, clientY: number): Event {
+  return { type: 'pointermove', pointerType, clientX, clientY } as unknown as Event;
+}
+
+/** Shorthand for a genuine mouse-driven pointermove. */
+function mousePointerMove(clientX: number, clientY: number): Event {
+  return pointerMove('mouse', clientX, clientY);
+}
+
 describe('Desktop Controller', () => {
   let eventListeners: Record<string, Array<(e: any) => void>>;
 
@@ -25,12 +35,12 @@ describe('Desktop Controller', () => {
 
   it('should calculate mouse aim angle relative to screen center', () => {
     const controller = new DesktopController();
-    // Cursor to the right of center -> angle 0
-    controller.setMousePosition(600, 300, 400, 300);
+    // Cursor to the right of center (400, 300) -> angle 0
+    window.dispatchEvent(mousePointerMove(600, 300));
     expect(controller.getAngle()).toBeCloseTo(0.0, 3);
 
     // Cursor directly below center -> angle PI/2
-    controller.setMousePosition(400, 500, 400, 300);
+    window.dispatchEvent(mousePointerMove(400, 500));
     expect(controller.getAngle()).toBeCloseTo(Math.PI / 2, 3);
   });
 
@@ -75,7 +85,7 @@ describe('Desktop Controller', () => {
     const controller = new DesktopController();
 
     // Mouse move
-    window.dispatchEvent({ type: 'mousemove', clientX: 600, clientY: 300 } as unknown as Event);
+    window.dispatchEvent(mousePointerMove(600, 300));
     expect(controller.getAngle()).toBeCloseTo(0.0, 3);
 
     // Left click down -> Boost
@@ -85,6 +95,39 @@ describe('Desktop Controller', () => {
     // Left click up
     window.dispatchEvent({ type: 'mouseup', button: 0 } as unknown as Event);
     expect(controller.isBoost()).toBe(false);
+  });
+
+  // REQ-PROTO-007 Scenario: touch input cannot contaminate mouse aim
+  it('should ignore pointer events that are not mouse-driven', () => {
+    const controller = new DesktopController();
+    let notifications = 0;
+    controller.onInputChange = () => {
+      notifications++;
+    };
+
+    // Aim down-right of center (400, 300) with a real mouse -> PI/4
+    window.dispatchEvent(mousePointerMove(600, 500));
+    expect(controller.getAngle()).toBeCloseTo(Math.PI / 4, 3);
+    expect(notifications).toBe(1);
+
+    // Touch and pen pointers below center must leave the aim untouched
+    window.dispatchEvent(pointerMove('touch', 400, 590));
+    window.dispatchEvent(pointerMove('pen', 400, 590));
+    expect(controller.getAngle()).toBeCloseTo(Math.PI / 4, 3);
+    expect(notifications).toBe(1);
+  });
+
+  it('should hand aim back to the mouse after keyboard steering', () => {
+    const controller = new DesktopController();
+
+    window.dispatchEvent({ type: 'keydown', code: 'KeyW' } as unknown as Event);
+    expect(controller.getAngle()).toBeCloseTo(-Math.PI / 2, 3);
+
+    // A genuine mouse move overrides the keyboard heading
+    window.dispatchEvent(mousePointerMove(600, 300));
+    expect(controller.getAngle()).toBeCloseTo(0.0, 3);
+
+    window.dispatchEvent({ type: 'keyup', code: 'KeyW' } as unknown as Event);
   });
 });
 

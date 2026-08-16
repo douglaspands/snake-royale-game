@@ -57,8 +57,16 @@ class GameWebViewActivity : AppCompatActivity() {
                 domStorageEnabled = true
                 databaseEnabled = true
                 cacheMode = WebSettings.LOAD_DEFAULT
-                loadWithOverviewMode = true
-                useWideViewPort = true
+                // The bundled SPA already declares its own
+                // `width=device-width, initial-scale=1.0` viewport meta tag. Enabling
+                // useWideViewPort emulates a wide desktop layout viewport, and pairing
+                // it with loadWithOverviewMode then zooms the whole page out to fit
+                // that emulated width -- shrinking the game and leaving a margin
+                // around it, unlike the same URL rendered in the system browser.
+                // Leaving both off honours the page's own viewport at scale 1.0.
+                // See REQ-AND-004.
+                loadWithOverviewMode = false
+                useWideViewPort = false
                 setSupportZoom(false)
                 displayZoomControls = false
                 mediaPlaybackRequiresUserGesture = false
