@@ -41,8 +41,8 @@ android {
         applicationId = "com.snakeroyale.host"
         minSdk = 24
         targetSdk = 34
-        versionCode = 5
-        versionName = "1.5.5"
+        versionCode = 6
+        versionName = "1.6.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
@@ -159,4 +159,9 @@ dependencies {
     implementation("com.google.android.material:material:1.12.0")
     implementation("androidx.activity:activity-ktx:1.9.0")
     implementation("androidx.constraintlayout:constraintlayout:2.1.4")
+    // Reference QR encoder: pure Java, no Android or native component. Replaces a
+    // hand-rolled generator that produced undecodable symbols. See REQ-AND-002.
+    // This is a Gradle dependency of the Android module only -- it never enters the
+    // Chaquopy Python tree, so REQ-AND-008 is unaffected.
+    implementation("com.google.zxing:core:3.5.3")
 }

@@ -1,7 +1,7 @@
 # 🐍 Snake Battle Royale Multiplayer
 
 [![CI](https://github.com/douglas/snake-game/actions/workflows/ci.yml/badge.svg)](file:///.github/workflows/ci.yml)
-[![OpenSpec v1.5.5-ANDROID-HOST](https://img.shields.io/badge/OpenSpec-v1.5.5--ANDROID--HOST-00f0ff.svg)](file:///home/douglas/Workspace/claude/snake-game/openspec/)
+[![OpenSpec v1.6.0-ANDROID-HOST](https://img.shields.io/badge/OpenSpec-v1.6.0--ANDROID--HOST-00f0ff.svg)](file:///home/douglas/Workspace/claude/snake-game/openspec/)
 [![Python 3.12+](https://img.shields.io/badge/Python-3.12%2B-blue.svg)](file:///home/douglas/Workspace/claude/snake-game/pyproject.toml)
 [![Starlette](https://img.shields.io/badge/Starlette-0.36%2B-009688.svg)](file:///home/douglas/Workspace/claude/snake-game/server/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.4-blue.svg)](file:///home/douglas/Workspace/claude/snake-game/client/)

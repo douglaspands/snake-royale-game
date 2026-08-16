@@ -1,6 +1,6 @@
 {
   "name": "snake-battle-royale",
-  "version": "1.5.5",
+  "version": "1.6.0",
   "description": "Real-time Multiplayer Snake Battle Royale Game (Spec-Driven Development + Graph Engineering)",
   "private": true,
   "scripts": {

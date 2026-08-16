@@ -1,7 +1,7 @@
 schema: "spec-driven"
 project:
   name: "snake-battle-royale"
-  version: "1.5.5-ANDROID-HOST"
+  version: "1.6.0-ANDROID-HOST"
   description: "Real-time Multiplayer Snake Battle Royale Game (SDD + Graph Engineering)"
 
 context: |

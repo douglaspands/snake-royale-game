@@ -9,6 +9,8 @@ import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.util.Log
+import android.view.View
 import android.widget.Button
 import android.widget.ImageView
 import android.widget.TextView
@@ -23,6 +25,7 @@ import java.net.URL
 class MainActivity : AppCompatActivity() {
 
     private companion object {
+        const val TAG = "SnakeDashboard"
         const val HEALTH_RETRIES = 20
         const val HEALTH_RETRY_DELAY_MS = 500L
         const val HEALTH_TIMEOUT_MS = 1500
@@ -32,6 +35,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var switchServer: SwitchCompat
     private lateinit var tvLanIpAddress: TextView
     private lateinit var ivQrCode: ImageView
+    private lateinit var tvQrHint: TextView
     private lateinit var btnCopyIp: Button
     private lateinit var btnPlayBrowser: Button
     private lateinit var btnPlayApp: Button
@@ -70,6 +74,7 @@ class MainActivity : AppCompatActivity() {
         switchServer = findViewById(R.id.switchServer)
         tvLanIpAddress = findViewById(R.id.tvLanIpAddress)
         ivQrCode = findViewById(R.id.ivQrCode)
+        tvQrHint = findViewById(R.id.tvQrHint)
         btnCopyIp = findViewById(R.id.btnCopyIp)
         btnPlayBrowser = findViewById(R.id.btnPlayBrowser)
         btnPlayApp = findViewById(R.id.btnPlayApp)
@@ -118,11 +123,24 @@ class MainActivity : AppCompatActivity() {
         val serverUrl = NetworkHelper.getPrimaryServerUrl(serverPort)
         tvLanIpAddress.text = serverUrl
 
+        // A QR encoding a loopback address sends the scanning phone to itself, which
+        // reads as "the host is broken" rather than "turn on Wi-Fi". See REQ-AND-002.
+        if (!QRCodeHelper.isReachableByPeers(serverUrl)) {
+            ivQrCode.visibility = View.GONE
+            tvQrHint.visibility = View.VISIBLE
+            tvQrHint.text = getString(R.string.qr_needs_wifi)
+            return
+        }
+
         try {
-            val qrBitmap = QRCodeHelper.generateQRCodeBitmap(serverUrl, size = 512)
-            ivQrCode.setImageBitmap(qrBitmap)
+            ivQrCode.setImageBitmap(QRCodeHelper.generateQRCodeBitmap(serverUrl, size = 512))
+            ivQrCode.visibility = View.VISIBLE
+            tvQrHint.visibility = View.GONE
         } catch (e: Exception) {
-            e.printStackTrace()
+            Log.e(TAG, "Failed to render the QR code for '$serverUrl'", e)
+            ivQrCode.visibility = View.GONE
+            tvQrHint.visibility = View.VISIBLE
+            tvQrHint.text = getString(R.string.qr_failed)
         }
     }
 

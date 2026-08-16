@@ -41,7 +41,7 @@
         <activity
             android:name=".GameWebViewActivity"
             android:exported="false"
-            android:screenOrientation="sensorLandscape"
+            android:screenOrientation="fullSensor"
             android:configChanges="orientation|screenSize|keyboardHidden"
             android:theme="@style/Theme.SnakeRoyaleHost.Fullscreen" />
 

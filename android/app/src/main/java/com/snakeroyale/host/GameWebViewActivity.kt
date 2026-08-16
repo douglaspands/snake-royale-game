@@ -2,6 +2,7 @@ package com.snakeroyale.host
 
 import android.annotation.SuppressLint
 import android.content.pm.ActivityInfo
+import android.content.res.Configuration
 import android.os.Build
 import android.os.Bundle
 import android.view.View
@@ -27,7 +28,10 @@ class GameWebViewActivity : AppCompatActivity() {
     @SuppressLint("SetJavaScriptEnabled")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
+        // Follows the sensor across all four orientations. `unspecified` defers to
+        // per-app display settings that vary by OEM, and `user` would deny landscape
+        // to a player who has auto-rotate locked. See REQ-AND-004.
+        requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_FULL_SENSOR
         setContentView(R.layout.activity_game_webview)
 
         hideSystemUI()
@@ -91,6 +95,19 @@ class GameWebViewActivity : AppCompatActivity() {
             @Suppress("DEPRECATION")
             window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         }
+    }
+
+    // configChanges keeps the activity alive across rotation -- which is what preserves
+    // the WebView and its WebSocket session -- but that also means onCreate does not run
+    // again, so the immersive flags are re-applied here. See REQ-AND-004.
+    override fun onConfigurationChanged(newConfig: Configuration) {
+        super.onConfigurationChanged(newConfig)
+        hideSystemUI()
+    }
+
+    override fun onWindowFocusChanged(hasFocus: Boolean) {
+        super.onWindowFocusChanged(hasFocus)
+        if (hasFocus) hideSystemUI()
     }
 
     override fun onDestroy() {

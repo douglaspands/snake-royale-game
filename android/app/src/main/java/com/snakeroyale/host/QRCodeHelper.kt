@@ -2,153 +2,62 @@ package com.snakeroyale.host
 
 import android.graphics.Bitmap
 import android.graphics.Color
+import com.google.zxing.BarcodeFormat
+import com.google.zxing.EncodeHintType
+import com.google.zxing.qrcode.QRCodeWriter
+import com.google.zxing.qrcode.decoder.ErrorCorrectionLevel
 
 /**
- * Pure Kotlin QR Code Matrix Generator (Model 2, Version 1-4 Byte Mode with ECC L).
- * Renders high-contrast Android Bitmap without external dependencies.
+ * ISO/IEC 18004 QR Code renderer backed by ZXing.
+ *
+ * The previous hand-rolled generator drew a symbol that looked correct but carried no
+ * Reed-Solomon codewords, never wrote the format information area it reserved, and
+ * omitted the dark module and quiet zone -- so no reader could decode it. See
+ * REQ-AND-002 and the v1.6.0 design.md, Decision 1.
  */
 object QRCodeHelper {
 
+    /** Quiet zone in modules. The specification requires at least four. */
+    private const val QUIET_ZONE_MODULES = 4
+
+    /**
+     * True when [url] points somewhere another device could actually reach.
+     *
+     * A QR encoding a loopback address sends the scanning phone to itself, producing a
+     * connection error that looks like the host is broken. The dashboard suppresses the
+     * symbol instead of presenting one that misattributes the problem.
+     */
+    fun isReachableByPeers(url: String): Boolean {
+        val host = url.substringAfter("://", "").substringBefore(":").substringBefore("/")
+        return host.isNotEmpty() &&
+            host != "localhost" &&
+            !host.startsWith("127.") &&
+            host != "0.0.0.0" &&
+            host != "::1"
+    }
+
     fun generateQRCodeBitmap(content: String, size: Int = 512): Bitmap {
-        val matrix = encodeStringToQRMatrix(content)
-        val matrixSize = matrix.size
+        val hints = mapOf(
+            EncodeHintType.ERROR_CORRECTION to ErrorCorrectionLevel.M,
+            EncodeHintType.MARGIN to QUIET_ZONE_MODULES,
+            EncodeHintType.CHARACTER_SET to "UTF-8",
+        )
+        val matrix = QRCodeWriter().encode(content, BarcodeFormat.QR_CODE, size, size, hints)
 
-        val bitmap = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
-        val scale = size.toFloat() / matrixSize
-
-        for (x in 0 until size) {
-            for (y in 0 until size) {
-                val matrixX = (x / scale).toInt().coerceIn(0, matrixSize - 1)
-                val matrixY = (y / scale).toInt().coerceIn(0, matrixSize - 1)
-                val color = if (matrix[matrixY][matrixX]) Color.BLACK else Color.WHITE
-                bitmap.setPixel(x, y, color)
+        val width = matrix.width
+        val height = matrix.height
+        // One setPixels call instead of width*height setPixel calls: at 512x512 the
+        // per-pixel path costs a quarter of a million JNI round trips on the main thread.
+        val pixels = IntArray(width * height)
+        for (y in 0 until height) {
+            val rowOffset = y * width
+            for (x in 0 until width) {
+                pixels[rowOffset + x] = if (matrix[x, y]) Color.BLACK else Color.WHITE
             }
         }
-        return bitmap
-    }
 
-    private fun encodeStringToQRMatrix(content: String): Array<BooleanArray> {
-        val size = 29 // Version 3 (29x29)
-        val matrix = Array(size) { BooleanArray(size) { false } }
-        val reserved = Array(size) { BooleanArray(size) { false } }
-
-        // 1. Finder Patterns (Top-Left, Top-Right, Bottom-Left)
-        drawFinderPattern(matrix, reserved, 0, 0)
-        drawFinderPattern(matrix, reserved, size - 7, 0)
-        drawFinderPattern(matrix, reserved, 0, size - 7)
-
-        // 2. Alignment Pattern (for Version 3 at 22, 22)
-        drawAlignmentPattern(matrix, reserved, 20, 20)
-
-        // 3. Timing Patterns
-        for (i in 8 until size - 8) {
-            val bit = (i % 2 == 0)
-            matrix[6][i] = bit
-            reserved[6][i] = true
-            matrix[i][6] = bit
-            reserved[i][6] = true
-        }
-
-        // 4. Reserve format areas
-        for (i in 0 until 9) {
-            reserved[8][i] = true
-            reserved[i][8] = true
-        }
-        for (i in 0 until 8) {
-            reserved[8][size - 1 - i] = true
-            reserved[size - 1 - i][8] = true
-        }
-
-        // 5. Data encoding (Byte Mode)
-        val bytes = content.toByteArray(Charsets.ISO_8859_1)
-        val bitStream = mutableListOf<Boolean>()
-
-        // Mode Indicator: Byte Mode (0100)
-        addBits(bitStream, 4, 4)
-        // Character count indicator (8 bits for Version 1-9)
-        addBits(bitStream, bytes.size, 8)
-        // Data bytes
-        for (b in bytes) {
-            addBits(bitStream, b.toInt() and 0xFF, 8)
-        }
-        // Terminator
-        addBits(bitStream, 0, 4)
-        // Pad to byte
-        while (bitStream.size % 8 != 0) {
-            bitStream.add(false)
-        }
-        // Pad bytes (0xEC, 0x11)
-        val padBytes = intArrayOf(0xEC, 0x11)
-        var padIndex = 0
-        while (bitStream.size < 70 * 8) {
-            addBits(bitStream, padBytes[padIndex % 2], 8)
-            padIndex++
-        }
-
-        // 6. Placement in matrix with simple masking (Pattern 0: (x + y) % 2 == 0)
-        var bitIndex = 0
-        var upward = true
-        var col = size - 1
-
-        while (col > 0) {
-            if (col == 6) col-- // Skip vertical timing line
-
-            val rows = if (upward) (size - 1 downTo 0) else (0 until size)
-            for (row in rows) {
-                for (c in intArrayOf(col, col - 1)) {
-                    if (!reserved[row][c]) {
-                        var bit = if (bitIndex < bitStream.size) bitStream[bitIndex++] else false
-                        // Mask 0: flip if (row + c) % 2 == 0
-                        if ((row + c) % 2 == 0) {
-                            bit = !bit
-                        }
-                        matrix[row][c] = bit
-                    }
-                }
-            }
-            upward = !upward
-            col -= 2
-        }
-
-        return matrix
-    }
-
-    private fun drawFinderPattern(matrix: Array<BooleanArray>, reserved: Array<BooleanArray>, startX: Int, startY: Int) {
-        for (y in 0 until 7) {
-            for (x in 0 until 7) {
-                val isOuter = (x == 0 || x == 6 || y == 0 || y == 6)
-                val isInner = (x in 2..4 && y in 2..4)
-                val bit = isOuter || isInner
-                matrix[startY + y][startX + x] = bit
-                reserved[startY + y][startX + x] = true
-            }
-        }
-        // Separator border
-        for (y in -1..7) {
-            for (x in -1..7) {
-                val px = startX + x
-                val py = startY + y
-                if (px in matrix.indices && py in matrix.indices) {
-                    reserved[py][px] = true
-                }
-            }
-        }
-    }
-
-    private fun drawAlignmentPattern(matrix: Array<BooleanArray>, reserved: Array<BooleanArray>, startX: Int, startY: Int) {
-        for (y in 0 until 5) {
-            for (x in 0 until 5) {
-                val isOuter = (x == 0 || x == 4 || y == 0 || y == 4)
-                val isCenter = (x == 2 && y == 2)
-                matrix[startY + y][startX + x] = (isOuter || isCenter)
-                reserved[startY + y][startX + x] = true
-            }
-        }
-    }
-
-    private fun addBits(list: MutableList<Boolean>, value: Int, length: Int) {
-        for (i in length - 1 downTo 0) {
-            list.add(((value shr i) and 1) == 1)
+        return Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888).apply {
+            setPixels(pixels, 0, width, 0, 0, width, height)
         }
     }
 }
