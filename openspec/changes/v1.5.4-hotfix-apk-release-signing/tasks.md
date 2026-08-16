@@ -10,7 +10,7 @@
 ## 2. Node B1 — Release Signing Configuration
 
 - [x] 2.1 Add a credential resolver to `android/app/build.gradle.kts` reading `ANDROID_KEYSTORE_FILE` / `ANDROID_KEYSTORE_PASSWORD` / `ANDROID_KEY_ALIAS` / `ANDROID_KEY_PASSWORD` from the environment, falling back to `android/keystore.properties`, returning null when incomplete
-- [x] 2.2 Declare `signingConfigs { create("release") { ... } }` with `enableV1Signing`, `enableV2Signing` and `enableV3Signing` all set to true
+- [x] 2.2 Declare `signingConfigs { create("release") { ... } }` with `enableV2Signing` and `enableV3Signing` true, and `enableV1Signing` false — AGP omits JAR signing at `minSdk 24` regardless (see `design.md` Decision 4)
 - [x] 2.3 Attach the signing config to `buildTypes.release` only when the resolver returns credentials, so configuration succeeds on a clone without the keystore
 - [x] 2.4 Keep `isMinifyEnabled = false` on the release variant — R8 would strip the classes Chaquopy resolves reflectively from Python (see `design.md` Decision 3)
 - [x] 2.5 Bump the APK identity to `versionCode = 4` and `versionName = "1.5.4"`
@@ -47,9 +47,9 @@
 
 *Blocked on the manual keystore generation and secret registration described in Node DOC; these steps run after the code is merged to the hotfix branch.*
 
-- [ ] 7.1 Generate the release keystore and register the four repository secrets
-- [ ] 7.2 Dry-run `gh workflow run release.yml --ref hotfix/1.5.4-apk-release-signing`; the upload step is skipped on a non-tag ref, so no published asset is touched
-- [ ] 7.3 Download the dry-run artifact and confirm: signer is not `CN=Android Debug`, v1/v2/v3 all verify, package is `com.snakeroyale.host`, not debuggable, `lib/arm64-v8a/` present
+- [x] 7.1 Generate the release keystore and register the four repository secrets
+- [x] 7.2 Dry-run `gh workflow run release.yml --ref hotfix/1.5.4-apk-release-signing`; the upload step is skipped on a non-tag ref, so no published asset is touched
+- [x] 7.3 Download the dry-run artifact and confirm: signer is `CN=Douglas Panhota` (not `CN=Android Debug`), v2 and v3 verify, package is `com.snakeroyale.host` at versionCode 4, not debuggable, `lib/arm64-v8a/` present, published `.sha256` matches
 - [ ] 7.4 Install on the Samsung Galaxy S20 FE (Android 13) and confirm the install completes without disabling Play Protect
 - [ ] 7.5 If the install still fails, capture the real error with `adb logcat -s PackageInstaller:* PackageManager:*` during installation to obtain the exact `INSTALL_FAILED_*` code instead of the generic UI message
 - [ ] 7.6 Verify in-place update by installing a subsequent build signed with the same keystore over v1.5.4, without uninstalling
