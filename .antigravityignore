@@ -22,6 +22,11 @@ android/app/build/**
 android/app/src/main/assets/client_dist/**
 android/app/src/main/python/server/**
 
+# PyInstaller desktop builds & local `gh run download` artifact folders
+*.spec
+release_output/**
+dist-apk/**
+
 # Dependencies & Environments
 .venv/**
 venv/**

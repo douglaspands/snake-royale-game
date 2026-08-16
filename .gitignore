@@ -75,3 +75,11 @@ android/app/src/main/python/server/
 *.jks
 android/keystore.properties
 
+# PyInstaller desktop builds (REQ-DESK-001/002) — dist/ and build/ above already
+# cover the default output dirs; these are the rest of a local build's leftovers.
+*.spec
+release_output/
+
+# Local `gh run download` artifact folders (Android APK, desktop executables)
+dist-apk/
+
