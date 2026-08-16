@@ -74,6 +74,11 @@ The CI/CD pipeline on GitHub Actions MUST automatically validate tests, setup th
 - **WHEN** Gradle validates the task graph for `assembleDebug`
 - **THEN** the Chaquopy `merge<Variant>PythonSources` tasks MUST declare an explicit dependency on `syncServerSources`, so Gradle reports no implicit-dependency validation problem and the sources are always copied before they are merged
 
+#### Scenario: Every manifest-declared resource resolves at link time
+- **GIVEN** `AndroidManifest.xml` declares `android:icon="@mipmap/ic_launcher"` and `android:roundIcon="@mipmap/ic_launcher_round"`
+- **WHEN** the `:app:processDebugResources` task links the application resources
+- **THEN** both mipmaps MUST exist for every standard density bucket (mdpi through xxxhdpi), so AAPT reports no `resource not found` error and the APK ships with a launcher icon
+
 #### Scenario: Workflow runs free of runtime deprecation warnings
 - **WHEN** any job in the release workflow completes
 - **THEN** the run reports no `Node.js 20 is deprecated` annotation, because every referenced action resolves to a `node24` runtime
