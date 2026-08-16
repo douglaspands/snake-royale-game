@@ -1,7 +1,7 @@
 # 🐍 Snake Battle Royale Multiplayer
 
 [![CI](https://github.com/douglas/snake-game/actions/workflows/ci.yml/badge.svg)](file:///.github/workflows/ci.yml)
-[![OpenSpec v1.5.4-ANDROID-HOST](https://img.shields.io/badge/OpenSpec-v1.5.4--ANDROID--HOST-00f0ff.svg)](file:///home/douglas/Workspace/claude/snake-game/openspec/)
+[![OpenSpec v1.5.5-ANDROID-HOST](https://img.shields.io/badge/OpenSpec-v1.5.5--ANDROID--HOST-00f0ff.svg)](file:///home/douglas/Workspace/claude/snake-game/openspec/)
 [![Python 3.12+](https://img.shields.io/badge/Python-3.12%2B-blue.svg)](file:///home/douglas/Workspace/claude/snake-game/pyproject.toml)
 [![Starlette](https://img.shields.io/badge/Starlette-0.36%2B-009688.svg)](file:///home/douglas/Workspace/claude/snake-game/server/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.4-blue.svg)](file:///home/douglas/Workspace/claude/snake-game/client/)
@@ -198,6 +198,16 @@ keyPassword=...
 
 Sem esse arquivo e sem as variáveis de ambiente o projeto continua configurando
 normalmente — apenas o `release` sai sem assinatura, e `assembleDebug` segue funcionando.
+
+### Instalar no aparelho (Play Protect)
+
+O APK é distribuído por sideload, fora da Play Store. Na primeira instalação o
+Android 13+ mostra **"O app não foi instalado"** sem explicar o motivo: é o Play
+Protect recusando um pacote sem reputação no Google. Não é defeito do build — é como
+o sideload funciona para qualquer app não publicado.
+
+Para instalar: *Play Store → seu perfil → Play Protect → ⚙️ → desativar "Verificar
+apps"*, instale, e **reative em seguida**.
 
 ### Conferir um APK baixado
 

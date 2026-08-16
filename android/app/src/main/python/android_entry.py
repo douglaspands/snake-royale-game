@@ -12,7 +12,12 @@ from typing import Any
 
 import uvicorn
 
-from server.app.main import app
+# NOTE: `server.app.main` is deliberately NOT imported at module scope. It calls
+# resolve_static_dir() while building its route table at import time, so importing it
+# here would resolve the static directory before start_server() exports
+# SNAKE_STATIC_DIR -- leaving the /assets mount out of the route table and serving a
+# blank page. The import lives inside start_server(), after the environment is set.
+# See REQ-AND-003.
 
 logger = logging.getLogger("android.server")
 
@@ -43,6 +48,10 @@ def start_server(
         os.environ["SNAKE_STATIC_DIR"] = static_dir
     if host_ip:
         os.environ["SNAKE_HOST_IP"] = host_ip
+
+    # Imported only now: the environment above must be in place before main.py builds
+    # its route table. See the module docstring note.
+    from server.app.main import app
 
     _current_port = port
 

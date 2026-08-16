@@ -6,6 +6,8 @@
     <string name="status_label">Status do Servidor:</string>
     <string name="status_online">ONLINE (30 Hz)</string>
     <string name="status_offline">OFFLINE</string>
+    <string name="status_starting">INICIANDO…</string>
+    <string name="status_failed_reason">FALHOU: %1$s</string>
     <string name="lan_access_title">📱 Acesso Wi-Fi / Rede Local</string>
     <string name="lan_access_hint">Outros celulares ou PCs na mesma rede podem conectar acessando:</string>
     <string name="btn_play_browser">🌐 Jogar no Navegador</string>

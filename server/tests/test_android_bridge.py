@@ -2,6 +2,7 @@
 Unit tests for Android Python bridge entry point lifecycle and configuration.
 """
 
+import builtins
 import importlib.util
 import os
 from typing import Any
@@ -55,6 +56,40 @@ def test_android_entry_start_and_stop_lifecycle():
         assert stopped is True
         assert mock_instance.should_exit is True
         assert android_entry.is_running() is False
+
+
+def test_static_dir_is_exported_before_server_module_is_imported():
+    """
+    `server.app.main` resolves its static directory while building the route table at
+    import time. If `android_entry` imported it at module scope, that resolution would
+    run before `start_server` exports SNAKE_STATIC_DIR -- the /assets mount would be
+    missing and the device would serve a blank page. Guards REQ-AND-003.
+    """
+    # The module must not have bound `app` at import time.
+    assert not hasattr(android_entry, "app")
+
+    android_entry._is_running = False
+    android_entry._server_instance = None
+    os.environ.pop("SNAKE_STATIC_DIR", None)
+
+    seen: dict[str, str | None] = {}
+
+    real_import = builtins.__import__
+
+    def recording_import(name: str, *args: Any, **kwargs: Any) -> Any:
+        if name == "server.app.main":
+            seen["static_dir"] = os.environ.get("SNAKE_STATIC_DIR")
+        return real_import(name, *args, **kwargs)
+
+    with patch("uvicorn.Server"), patch.object(builtins, "__import__", recording_import):
+        assert android_entry.start_server(port=8099, static_dir="/tmp/spa_bundle") is True
+
+    assert seen["static_dir"] == "/tmp/spa_bundle", (
+        "server.app.main was imported before SNAKE_STATIC_DIR was exported"
+    )
+
+    android_entry._is_running = False
+    android_entry._server_instance = None
 
 
 def test_android_entry_stop_when_not_running():
