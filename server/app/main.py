@@ -1,16 +1,25 @@
 """
-FastAPI Application Entry Point for Snake Battle Royale Server.
+Starlette Application Entry Point for Snake Battle Royale Server.
 Provides WebSocket endpoints, game loop lifecycle, health check and static asset serving.
+
+Starlette is used directly rather than FastAPI: this server exposes no request/response
+models, so it needs none of FastAPI's pydantic-backed validation layer. Dropping that
+dependency also removes pydantic-core, a Rust extension with no Chaquopy wheel, which
+is what allows the Android host APK to bundle this server. See REQ-AND-008.
 """
 
 import os
 import uuid
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, HTMLResponse
-from fastapi.staticfiles import StaticFiles
+from starlette.applications import Starlette
+from starlette.middleware import Middleware
+from starlette.middleware.cors import CORSMiddleware
+from starlette.requests import Request
+from starlette.responses import FileResponse, HTMLResponse, JSONResponse, Response
+from starlette.routing import Mount, Route, WebSocketRoute
+from starlette.staticfiles import StaticFiles
+from starlette.websockets import WebSocket, WebSocketDisconnect
 
 from server.app.game.engine import GameEngine
 from server.app.game.loop import GameLoop
@@ -24,7 +33,7 @@ game_loop = GameLoop(engine=engine, connection_manager=connection_manager, tick_
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI):
+async def lifespan(app: Starlette):
     # Startup: Start background game loop & print LAN IP banner
     await game_loop.start()
     log_startup_banner(port=8000)
@@ -33,35 +42,19 @@ async def lifespan(app: FastAPI):
     await game_loop.stop()
 
 
-app = FastAPI(
-    title="Snake Battle Royale Server",
-    version="1.0.0-VIPER",
-    lifespan=lifespan,
-)
-
-# CORS middleware for local development
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-
-@app.get("/health")
-async def health_check():
+async def health_check(request: Request) -> Response:
     """Health check endpoint."""
-    return {
-        "status": "healthy",
-        "version": "1.0.0-VIPER",
-        "active_players": len(connection_manager.active_sockets),
-        "tick": engine.tick,
-    }
+    return JSONResponse(
+        {
+            "status": "healthy",
+            "version": "1.0.0-VIPER",
+            "active_players": len(connection_manager.active_sockets),
+            "tick": engine.tick,
+        }
+    )
 
 
-@app.websocket("/ws")
-async def websocket_endpoint(websocket: WebSocket):
+async def websocket_endpoint(websocket: WebSocket) -> None:
     """WebSocket endpoint for real-time multiplayer communication."""
     player_id = str(uuid.uuid4())
     await connection_manager.connect(websocket, player_id)
@@ -95,16 +88,8 @@ def resolve_static_dir() -> str | None:
     return None
 
 
-# Mount static files from client/dist if present
-static_dir = resolve_static_dir()
-if static_dir is not None:
-    assets_dir = os.path.join(static_dir, "assets")
-    if os.path.exists(assets_dir):
-        app.mount("/assets", StaticFiles(directory=assets_dir), name="assets")
-
-
-@app.get("/{full_path:path}")
-async def serve_spa(full_path: str = ""):
+async def serve_spa(request: Request) -> Response:
+    full_path = request.path_params.get("full_path", "")
     current_dir = resolve_static_dir()
     if current_dir is not None:
         if full_path:
@@ -129,3 +114,40 @@ async def serve_spa(full_path: str = ""):
 </html>""",
         status_code=200,
     )
+
+
+def build_routes() -> list:
+    """
+    Assembles the route table. The SPA catch-all must stay last so that /health,
+    /ws and /assets are matched first.
+    """
+    routes: list = [
+        Route("/health", health_check, methods=["GET"]),
+        WebSocketRoute("/ws", websocket_endpoint),
+    ]
+
+    # Mount static files from client/dist if present
+    static_dir = resolve_static_dir()
+    if static_dir is not None:
+        assets_dir = os.path.join(static_dir, "assets")
+        if os.path.exists(assets_dir):
+            routes.append(Mount("/assets", app=StaticFiles(directory=assets_dir), name="assets"))
+
+    routes.append(Route("/{full_path:path}", serve_spa, methods=["GET"]))
+    return routes
+
+
+app = Starlette(
+    routes=build_routes(),
+    lifespan=lifespan,
+    # CORS middleware for local development
+    middleware=[
+        Middleware(
+            CORSMiddleware,
+            allow_origins=["*"],
+            allow_credentials=True,
+            allow_methods=["*"],
+            allow_headers=["*"],
+        )
+    ],
+)

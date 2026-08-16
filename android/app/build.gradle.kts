@@ -12,13 +12,15 @@ android {
         applicationId = "com.snakeroyale.host"
         minSdk = 24
         targetSdk = 34
-        versionCode = 2
-        versionName = "1.5.1"
+        versionCode = 3
+        versionName = "1.5.3"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
+        // Chaquopy ships no Python 3.12 runtime for 32-bit ARM; adding armeabi-v7a
+        // here fails the Gradle configuration phase. See REQ-AND-007.
         ndk {
-            abiFilters += listOf("arm64-v8a", "armeabi-v7a", "x86_64")
+            abiFilters += listOf("arm64-v8a", "x86_64")
         }
     }
 
@@ -55,12 +57,14 @@ android {
 chaquopy {
     defaultConfig {
         version = "3.12"
+        // Every package here must be pure Python: Chaquopy can only install native
+        // packages it has prebuilt wheels for, and it has none for the Rust extensions
+        // behind pydantic (pydantic-core) or jsonschema (rpds-py). The server targets
+        // Starlette directly for exactly this reason -- see REQ-AND-008.
         pip {
-            install("fastapi>=0.110.0")
+            install("starlette>=0.36.0")
             install("uvicorn>=0.28.0")
             install("websockets>=12.0")
-            install("pydantic>=2.6.0")
-            install("jsonschema>=4.21.0")
         }
     }
     sourceSets {
@@ -79,6 +83,14 @@ tasks.register<Copy>("syncServerSources") {
 tasks.named("preBuild") {
     dependsOn("syncServerSources")
 }
+
+// syncServerSources writes into src/main/python, which Chaquopy consumes as a Python
+// source root. Without an explicit edge, Gradle rejects the build with an
+// implicit-dependency validation error. See REQ-AND-006.
+tasks.matching { it.name.startsWith("merge") && it.name.endsWith("PythonSources") }
+    .configureEach {
+        dependsOn("syncServerSources")
+    }
 
 dependencies {
     implementation("androidx.core:core-ktx:1.13.1")

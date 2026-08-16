@@ -8,11 +8,28 @@ build/
 *.min.css
 *.map
 
+# Android / Gradle build artifacts
+.gradle/
+android/.gradle/
+android/build/
+android/app/build/
+*.apk
+*.aab
+
+# Generated Android sync targets (copies of server/ and client/dist/ -- never the source)
+android/app/src/main/assets/client_dist/
+android/app/src/main/python/server/
+
 # Virtual Environments & Dependencies
 .venv/
 venv/
 node_modules/
 client/node_modules/
+
+# Lockfiles (large, generated, never hand-edited)
+uv.lock
+package-lock.json
+client/package-lock.json
 
 # Test & Coverage Caches
 .coverage

@@ -8,7 +8,7 @@ import json
 import logging
 from typing import Any
 
-from fastapi import WebSocket
+from starlette.websockets import WebSocket
 
 from server.app.game.engine import DeathEvent, GameEngine
 

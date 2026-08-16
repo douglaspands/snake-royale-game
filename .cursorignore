@@ -1,5 +1,6 @@
-# Antigravity / Gemini Workspace Token Filter
-# Prevents large generated/cache files from consuming LLM context tokens
+# Cursor Workspace Token Filter
+# Prevents large generated/cache files from consuming LLM context tokens.
+# Kept in sync with .antigravityignore and .ignore (see openspec/config.yaml -> token_efficiency).
 
 # Build artifacts & compiled bundles
 client/dist/**
@@ -41,7 +42,7 @@ coverage/**
 htmlcov/**
 client/coverage/**
 
-# Large lock files, logs, and transcripts
+# Logs & Transcripts
 *.log
 *.jsonl
 npm-debug.log*
@@ -51,3 +52,4 @@ npm-debug.log*
 Thumbs.db
 *.tmp
 *.swp
+*.swo

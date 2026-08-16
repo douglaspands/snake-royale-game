@@ -1,12 +1,12 @@
 schema: "spec-driven"
 project:
   name: "snake-battle-royale"
-  version: "1.4.0-HUD-LAYOUT"
+  version: "1.5.3-ANDROID-HOST"
   description: "Real-time Multiplayer Snake Battle Royale Game (SDD + Graph Engineering)"
 
 context: |
   Real-time Multiplayer Snake Battle Royale Game built using Spec-Driven Development (SDD) and Graph Engineering.
-  Backend: Python 3.12+, uv package manager, FastAPI, Uvicorn, WebSockets, pytest, 30-40 Hz Server-Authoritative loop.
+  Backend: Python 3.12+, uv package manager, Starlette, Uvicorn, WebSockets, pytest, 30-40 Hz Server-Authoritative loop.
   Frontend: Vite, TypeScript, HTML5 Canvas 2D (60-120 FPS), adaptive LERP interpolation with Client-Side Prediction (CSP), vitest.
   Controls: Desktop (Mouse / WASD / Space boost), Mobile/Tablet (Dynamic Floating Virtual Joystick, Double-Tap & Hold Turbo).
   Distribution: Single-command unified server running on port 8000.

@@ -31,7 +31,7 @@ Este arquivo define as diretrizes obrigatórias para o **Google Antigravity (AGY
    - 100% de conformidade com `uv run ty check server` (zero erros de tipagem).
 4. **Qualidade do Frontend (TypeScript + Vite + Canvas 2D):**
    - 100% de conformidade com `npm test` e `npm run build`.
-5. **Servidor Unificado:** O backend FastAPI serve a API WebSocket e os assets compilados do frontend (`client/dist`) em um único comando: `uv run uvicorn server.app.main:app --host 0.0.0.0 --port 8000`.
+5. **Servidor Unificado:** O backend Starlette serve a API WebSocket e os assets compilados do frontend (`client/dist`) em um único comando: `uv run uvicorn server.app.main:app --host 0.0.0.0 --port 8000`.
 
 ---
 

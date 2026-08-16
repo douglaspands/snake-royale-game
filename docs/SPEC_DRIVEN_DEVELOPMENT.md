@@ -61,14 +61,23 @@ O projeto utiliza a CLI oficial do `@fission-ai/openspec`. Principais comandos i
 
 ---
 
-## 🤖 4. Integração Nativa com Google Antigravity (AGY)
+## 🤖 4. Integração Nativa com Agentes de IA
 
-O projeto possui adaptadores de habilidades (**Skills**) e comandos (**Workflows / Slash Commands**) configurados nativamente em [`.agent/`](file:///home/douglas/Workspace/claude/snake-game/.agent/):
+O projeto possui adaptadores de habilidades (**Skills**) e comandos (**Workflows / Slash Commands**) configurados nativamente para dois agentes, sobre o **mesmo** conjunto de workflows:
+
+| Agente | Adaptador | Instruções de projeto |
+| :--- | :--- | :--- |
+| **Google Antigravity (AGY)** | [`.agent/`](file:///home/douglas/Workspace/claude/snake-game/.agent/) — fonte canônica | [`GEMINI.md`](file:///home/douglas/Workspace/claude/snake-game/GEMINI.md) |
+| **Claude Code** | [`.claude/`](file:///home/douglas/Workspace/claude/snake-game/.claude/) — ponteiros finos para `.agent/` | [`CLAUDE.md`](file:///home/douglas/Workspace/claude/snake-game/CLAUDE.md) |
 
 - **Skills:** `openspec-propose`, `openspec-apply-change`, `openspec-update-change`, `openspec-sync-specs`, `openspec-archive-change`, `openspec-explore`.
 - **Workflows:** `/opsx-propose`, `/opsx-apply`, `/opsx-update`, `/opsx-sync`, `/opsx-archive`, `/opsx-explore`.
 
-### Ciclo de Vida de uma Mudança via Antigravity:
+> Os arquivos em `.claude/skills/` e `.claude/commands/` são **ponteiros de ~5 linhas** que redirecionam para os arquivos correspondentes em `.agent/`. Isso mantém `.agent/` como fonte única da verdade e evita divergência entre os dois agentes. Ao atualizar um workflow, edite apenas `.agent/`.
+
+O `.claude/settings.json` também declara uma allowlist dos comandos read-only de validação (`openspec`, `npm test`, `uv run ruff`, `gh run view`, …) e bloqueia a leitura de segredos (`.env`, `android/local.properties`, `*.keystore`, `*.jks`).
+
+### Ciclo de Vida de uma Mudança:
 1. **/opsx-propose `<ideia>`**: Cria a proposta formal, estrutura de deltas e critérios de sucesso.
 2. **/opsx-apply `<id>`**: Executa a implementação orientada a testes seguindo o DAG de tarefas.
 3. **/opsx-sync**: Sincroniza e valida todas as especificações delta com o código.
@@ -79,9 +88,10 @@ O projeto possui adaptadores de habilidades (**Skills**) e comandos (**Workflows
 ## ⚡ 5. Otimização de Custo de Tokens (Token Efficiency)
 
 Para otimizar o consumo de contexto dos modelos de linguagem e acelerar a resposta:
-1. **Filtros de Contexto Rigorosos:** Arquivos [`.antigravityignore`](file:///home/douglas/Workspace/claude/snake-game/.antigravityignore) e [`.ignore`](file:///home/douglas/Workspace/claude/snake-game/.ignore) impedem a ingestão de caches (`.pytest_cache`, `.ruff_cache`), bundles (`client/dist/`), coverage reports e lockfiles volumosos no Antigravity.
-2. **Modularidade de Código:** Arquivos de implementação mantidos intencionalmente compactos (<300 linhas) e altamente focados.
-3. **Compactação de Payload:** Serialização de rede e esquemas JSON otimizados com precisão flutuante controlada.
+1. **Filtros de Contexto Rigorosos:** Os arquivos [`.antigravityignore`](file:///home/douglas/Workspace/claude/snake-game/.antigravityignore), [`.ignore`](file:///home/douglas/Workspace/claude/snake-game/.ignore) e [`.cursorignore`](file:///home/douglas/Workspace/claude/snake-game/.cursorignore) impedem a ingestão de caches (`.pytest_cache`, `.ruff_cache`), bundles (`client/dist/`), artefatos Gradle (`android/**/build/`, `*.apk`), coverage reports e lockfiles volumosos (`uv.lock`, `package-lock.json`). O `.ignore` é honrado nativamente pelo ripgrep, motor de busca usado pelos agentes.
+2. **Deduplicação de Fontes Sincronizadas:** Os diretórios `android/app/src/main/python/server/` e `android/app/src/main/assets/client_dist/` são **cópias geradas** de `server/` e `client/dist/` no momento do build. São filtrados para que buscas no código não retornem hits duplicados — a fonte a editar é sempre a original.
+3. **Modularidade de Código:** Arquivos de implementação mantidos intencionalmente compactos (<300 linhas) e altamente focados.
+4. **Compactação de Payload:** Serialização de rede e esquemas JSON otimizados com precisão flutuante controlada.
 
 ---
 
