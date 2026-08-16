@@ -51,10 +51,19 @@
 - [x] 6.3 Confirm workflow YAML structure by inspection (no local `gradle`/`actionlint`/`yamllint` available in this environment; `android/` has no Gradle wrapper and `ANDROID_HOME` is unset)
 - [x] 6.4 Dry-run the Android build via `gh workflow run release.yml --ref <hotfix-branch>`; the upload step is skipped on a non-tag ref, so no release asset is touched
 - [x] 6.5 Confirm the run shows no `GradleException` from `PythonPlugin.getAbis` and no `Node.js 20 is deprecated` annotation
-- [ ] 6.6 Re-run the dry-run after the Starlette migration and confirm `:app:generateDebugPythonRequirements` and `assembleDebug` both succeed
+- [x] 6.6 Re-run the dry-run after the Starlette migration and confirm `:app:generateDebugPythonRequirements` succeeds with every dependency resolving to a pure-Python wheel
 
-## 7. Node DOC — Specification Sync & Archive Preparation
+## 7. Node B2c — Remaining Build Blockers Uncovered by the Dry-Run Loop
 
-- [x] 7.1 Author the `android` delta spec: ADDED `REQ-AND-007` and `REQ-AND-008`, MODIFIED `REQ-AND-001` and `REQ-AND-006`
-- [x] 7.2 Author the `harness` delta spec: MODIFIED `REQ-HARN-007`
-- [ ] 7.3 Prepare the change summary for the PR description
+*Each fix advanced the build one stage further; all five failures were pre-existing and had been masked by the one before it.*
+
+- [x] 7.1 Wire `merge<Variant>PythonSources` to `dependsOn("syncServerSources")`, resolving Gradle's implicit-dependency validation error on `src/main/python`
+- [x] 7.2 Add the `ic_launcher` / `ic_launcher_round` mipmaps for all five density buckets — `AndroidManifest.xml` declared them but the project had no mipmap resources, failing AAPT resource linking
+- [x] 7.3 Flatten slashes in the release APK filename so branch refs from `workflow_dispatch` dry-runs resolve to a file rather than a missing subdirectory
+
+## 8. Node DOC — Specification Sync & Archive Preparation
+
+- [x] 8.1 Author the `android` delta spec: ADDED `REQ-AND-007` and `REQ-AND-008`, MODIFIED `REQ-AND-001` and `REQ-AND-006`
+- [x] 8.2 Author the `harness` delta spec: MODIFIED `REQ-HARN-007`
+- [x] 8.3 Verify the full release pipeline green end to end via `workflow_dispatch` (run [31922834763](https://github.com/douglaspands/snake-royale-game/actions/runs/31922834763)) — APK built, artifact prepared, upload correctly skipped on a non-tag ref, zero annotations
+- [ ] 8.4 Prepare the change summary for the PR description

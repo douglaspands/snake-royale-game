@@ -26,6 +26,7 @@ Separately, the repository is configured exclusively for Google Antigravity (`GE
 - Bump the Android APK identity to `versionCode = 3` / `versionName = "1.5.3"`.
 - Pin every GitHub Action in `ci.yml` and `release.yml` to the lowest major version that runs on the `node24` runtime, eliminating the deprecation warnings.
 - Synchronize the stale version metadata in `openspec/config.yaml`, `package.json` and `pyproject.toml`.
+- Clear the three further blockers each preceding fix uncovered: wire the Chaquopy `merge<Variant>PythonSources` tasks to `syncServerSources` so Gradle's task-graph validation passes; add the `ic_launcher` / `ic_launcher_round` mipmaps that `AndroidManifest.xml` declares but the project never contained; and flatten slashes in the release APK filename so `workflow_dispatch` dry-runs on a branch resolve to a file rather than a missing subdirectory.
 
 ## Capabilities
 
