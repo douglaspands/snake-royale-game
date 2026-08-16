@@ -69,6 +69,11 @@ The CI/CD pipeline on GitHub Actions MUST automatically validate tests, setup th
 - **WHEN** the release workflow is dispatched manually via `workflow_dispatch` against that branch
 - **THEN** the APK is compiled end to end, and the upload step is skipped because the ref is not a tag and the event is not `release`, leaving all published release assets untouched
 
+#### Scenario: Server source synchronization is wired into the task graph
+- **GIVEN** the `syncServerSources` task copies `server/` into `android/app/src/main/python/server`, a directory Chaquopy consumes as a Python source root
+- **WHEN** Gradle validates the task graph for `assembleDebug`
+- **THEN** the Chaquopy `merge<Variant>PythonSources` tasks MUST declare an explicit dependency on `syncServerSources`, so Gradle reports no implicit-dependency validation problem and the sources are always copied before they are merged
+
 #### Scenario: Workflow runs free of runtime deprecation warnings
 - **WHEN** any job in the release workflow completes
 - **THEN** the run reports no `Node.js 20 is deprecated` annotation, because every referenced action resolves to a `node24` runtime

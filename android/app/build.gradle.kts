@@ -84,6 +84,14 @@ tasks.named("preBuild") {
     dependsOn("syncServerSources")
 }
 
+// syncServerSources writes into src/main/python, which Chaquopy consumes as a Python
+// source root. Without an explicit edge, Gradle rejects the build with an
+// implicit-dependency validation error. See REQ-AND-006.
+tasks.matching { it.name.startsWith("merge") && it.name.endsWith("PythonSources") }
+    .configureEach {
+        dependsOn("syncServerSources")
+    }
+
 dependencies {
     implementation("androidx.core:core-ktx:1.13.1")
     implementation("androidx.appcompat:appcompat:1.6.1")
