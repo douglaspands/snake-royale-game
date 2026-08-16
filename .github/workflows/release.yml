@@ -89,6 +89,10 @@ jobs:
           if [ -z "$VERSION_TAG" ]; then
             VERSION_TAG="latest"
           fi
+          # Branch refs from workflow_dispatch dry-runs contain slashes
+          # (e.g. hotfix/1.5.3-chaquopy-abi); flatten them so the destination
+          # stays a single file inside release_output/ instead of a subpath.
+          VERSION_TAG="${VERSION_TAG//\//-}"
           APK_SOURCE="android/app/build/outputs/apk/debug/app-debug.apk"
           APK_DEST="release_output/snake-royale-server-${VERSION_TAG}.apk"
           if [ -f "$APK_SOURCE" ]; then
