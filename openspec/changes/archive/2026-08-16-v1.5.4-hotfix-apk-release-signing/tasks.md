@@ -14,7 +14,7 @@
 - [x] 2.3 Attach the signing config to `buildTypes.release` only when the resolver returns credentials, so configuration succeeds on a clone without the keystore
 - [x] 2.4 Keep `isMinifyEnabled = false` on the release variant — R8 would strip the classes Chaquopy resolves reflectively from Python (see `design.md` Decision 3)
 - [x] 2.5 Bump the APK identity to `versionCode = 4` and `versionName = "1.5.4"`
-- [ ] 2.6 Verify `gradle assembleDebug` still configures with no credentials present — **not runnable locally** (no `gradle`, `ANDROID_HOME` unset, no wrapper in `android/`); the resolver was written to avoid the script-property smart cast that would fail at configuration time, but this is confirmed only by the CI dry-run in 7.2
+- [x] 2.6 Verify `gradle assembleDebug` still configures with no credentials present — **not runnable locally** (no `gradle`, `ANDROID_HOME` unset, no wrapper in `android/`); the resolver was written to avoid the script-property smart cast that would fail at configuration time; confirmed via the CI dry-run in 7.2
 
 ## 3. Node B2 — Release Workflow Migration
 
@@ -50,7 +50,7 @@
 - [x] 7.1 Generate the release keystore and register the four repository secrets
 - [x] 7.2 Dry-run `gh workflow run release.yml --ref hotfix/1.5.4-apk-release-signing`; the upload step is skipped on a non-tag ref, so no published asset is touched
 - [x] 7.3 Download the dry-run artifact and confirm: signer is `CN=Douglas Panhota` (not `CN=Android Debug`), v2 and v3 verify, package is `com.snakeroyale.host` at versionCode 4, not debuggable, `lib/arm64-v8a/` present, published `.sha256` matches
-- [ ] 7.4 Install on the Samsung Galaxy S20 FE (Android 13) and confirm the install completes without disabling Play Protect
-- [ ] 7.5 If the install still fails, capture the real error with `adb logcat -s PackageInstaller:* PackageManager:*` during installation to obtain the exact `INSTALL_FAILED_*` code instead of the generic UI message
-- [ ] 7.6 Verify in-place update by installing a subsequent build signed with the same keystore over v1.5.4, without uninstalling
-- [ ] 7.7 Tag and publish release `v1.5.4`, then verify the published asset and its checksum
+- [x] 7.4 Install on the Samsung Galaxy S20 FE (Android 13) and confirm the install completes without disabling Play Protect — user-confirmed on-device, 2026-08-16
+- [x] 7.5 If the install still fails, capture the real error with `adb logcat -s PackageInstaller:* PackageManager:*` during installation to obtain the exact `INSTALL_FAILED_*` code instead of the generic UI message — not needed, install succeeded cleanly
+- [x] 7.6 Verify in-place update by installing a subsequent build signed with the same keystore over v1.5.4, without uninstalling — user-confirmed on-device, 2026-08-16
+- [x] 7.7 Tag and publish release `v1.5.4` — superseded: no standalone `v1.5.4` tag was cut. Work continued directly into v1.5.5/v1.6.0/v1.6.1 without an intermediate release, and this change ships bundled under the unified `v1.6.1` tag/release instead

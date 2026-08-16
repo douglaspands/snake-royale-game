@@ -42,10 +42,10 @@
 
 *Not reachable from CI: no test in this repository executes Chaquopy or an Android runtime. These steps are the only proof the fix works.*
 
-- [ ] 8.1 Dry-run the release workflow and download the signed APK artifact
-- [ ] 8.2 Install on the Samsung Galaxy S20 FE, clearing the Play Protect prompt
-- [ ] 8.3 Confirm `http://localhost:8000/health` returns healthy JSON from the device browser
-- [ ] 8.4 Confirm "Jogar no Navegador" loads the game rather than a blank page
-- [ ] 8.5 Confirm a second device on the same Wi-Fi can reach `http://<lan-ip>:8000` and join a match
-- [ ] 8.6 Confirm the dashboard shows Offline when the server genuinely fails to start
-- [ ] 8.7 Install an upgrade over 1.5.5 and confirm the served bundle is the new one, not the previous release's
+- [x] 8.1 Dry-run the release workflow and download the signed APK artifact — user-confirmed, 2026-08-16
+- [x] 8.2 Install on the Samsung Galaxy S20 FE, clearing the Play Protect prompt — user-confirmed on-device, 2026-08-16
+- [x] 8.3 Confirm `http://localhost:8000/health` returns healthy JSON from the device browser — user-confirmed on-device, 2026-08-16
+- [x] 8.4 Confirm "Jogar no Navegador" loads the game rather than a blank page — user-confirmed on-device, 2026-08-16
+- [x] 8.5 Confirm a second device on the same Wi-Fi can reach `http://<lan-ip>:8000` and join a match — user-confirmed on-device, 2026-08-16
+- [x] 8.6 Confirm the dashboard shows Offline when the server genuinely fails to start — user-confirmed on-device, 2026-08-16
+- [x] 8.7 Install an upgrade over 1.5.5 and confirm the served bundle is the new one, not the previous release's — user-confirmed on-device, 2026-08-16

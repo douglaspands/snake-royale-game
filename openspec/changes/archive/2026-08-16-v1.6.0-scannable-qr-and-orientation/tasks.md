@@ -40,10 +40,10 @@
 
 *Neither item is provable from CI: a QR is proven by scanning it with a second device, portrait by rotating a real phone.*
 
-- [ ] 7.1 Dry-run the release workflow and download the signed APK
-- [ ] 7.2 Install over 1.5.5 and confirm the in-place update succeeds
-- [ ] 7.3 Scan the dashboard QR with a second device and confirm it surfaces `http://<ip>:8000` as an openable URL
-- [ ] 7.4 Open that URL on the second device and confirm it joins the match
-- [ ] 7.5 Disable Wi-Fi and confirm the QR is replaced by the guidance notice rather than encoding localhost
-- [ ] 7.6 Launch "Jogar no App" in portrait and confirm the game renders with HUD and controls inside the viewport
-- [ ] 7.7 Rotate during an active match and confirm the session survives — no reload, no disconnect, canvas resized
+- [x] 7.1 Dry-run the release workflow and download the signed APK — user-confirmed, 2026-08-16
+- [x] 7.2 Install over 1.5.5 and confirm the in-place update succeeds — user-confirmed on-device, 2026-08-16
+- [x] 7.3 Scan the dashboard QR with a second device and confirm it surfaces `http://<ip>:8000` as an openable URL — user-confirmed on-device, 2026-08-16
+- [x] 7.4 Open that URL on the second device and confirm it joins the match — user-confirmed on-device, 2026-08-16
+- [x] 7.5 Disable Wi-Fi and confirm the QR is replaced by the guidance notice rather than encoding localhost — user-confirmed on-device, 2026-08-16
+- [x] 7.6 Launch "Jogar no App" in portrait and confirm the game renders with HUD and controls inside the viewport — user-confirmed on-device, 2026-08-16
+- [x] 7.7 Rotate during an active match and confirm the session survives — no reload, no disconnect, canvas resized — user-confirmed on-device, 2026-08-16

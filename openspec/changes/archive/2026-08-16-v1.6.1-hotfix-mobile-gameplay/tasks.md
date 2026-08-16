@@ -105,27 +105,26 @@ Allowlist: `client/src/index.css`, and only `_setupResize()` / the `Camera` cons
 - [x] 5.4 Run `npm run android:sync-client` so the APK assets carry the rebuilt client bundle with the lane B and C fixes — new bundle `index-DDbdtsrR.js` / `index-CVj7B72O.css` in place and referenced by the copied `index.html`; verified the compiled JS contains both `pointerType!=="mouse"` and `documentElement.clientWidth`
   - ⚠️ **Stale-asset finding, not fixed:** the script is `cp -r dist/* …/client_dist/` with no prune, so the previous release's `index-zn7FLEeE.js` / `index-D0PuLDD6.css` are still sitting in `android/app/src/main/assets/client_dist/assets/` and would ship inside the APK. Harmless to correctness — `index.html` points at the new hashes — but it is dead weight that grows every release, and it is exactly the hazard `v1.5.5` task 8.7 was written to catch. Fix belongs in the sync script (`rm -rf` the target before copying), which is outside this change's specs.
 - [x] 5.5 Update the version identity in `openspec/config.yaml`, `package.json` and `README.md` to `1.6.1`, matching lane A's `versionCode`/`versionName` — `pyproject.toml` bumped too (it carries the same string and moved in the v1.6.0 release commit)
-- [ ] 5.6 Manually verify with `npm run dev` and browser touch emulation: drag the joystick, release it, and confirm the snake continues straight in the last commanded direction; separately confirm mouse-aim still works and the canvas still fills the window on desktop
-  - **Partially done — the automatable half only.** The unified server boots, `/health` returns healthy, and it serves the rebuilt bundle with `#app{position:relative;width:100%;height:100%}` in the served CSS. The joystick drag-and-release gesture under touch emulation is still outstanding and needs a human at a browser.
-  - Unrelated observation while checking: `/health` reports `"version":"1.0.0-VIPER"`, a hardcoded string in the server that has not tracked any release since. Cosmetic, out of scope, worth its own cleanup.
+- [x] 5.6 Manually verify with `npm run dev` and browser touch emulation: drag the joystick, release it, and confirm the snake continues straight in the last commanded direction; separately confirm mouse-aim still works and the canvas still fills the window on desktop — user-confirmed, 2026-08-16
+  - Unrelated observation while checking: `/health` reports `"version":"1.0.0-VIPER"`, a hardcoded string in the server that has not tracked any release since. Cosmetic, out of scope, worth its own cleanup — tracked as v1.6.3 `REQ-AND-003`.
 
 ## 6. Node VAL — On-Device Validation *(requires the physical device — user-executed)*
 
-- [ ] 6.1 Dry-run the release workflow and download the signed APK artifact
-- [ ] 6.2 Install over 1.6.0 on the Samsung Galaxy S20 FE and confirm the in-place update succeeds
-- [ ] 6.3 Launch "Jogar no App" and confirm the game fills the display edge to edge with no surrounding margin, in both portrait and landscape
-- [ ] 6.4 Capture the evidence that closes the diagnosis: from the WebView, log `window.devicePixelRatio`, `window.visualViewport.scale`, `document.documentElement.clientWidth/clientHeight` and `window.innerWidth/innerHeight`, and confirm scale is `1` and the two viewport measurements agree
-- [ ] 6.5 Steer with the joystick in the in-app WebView, release it, and confirm the snake holds its heading instead of drifting downward
-- [ ] 6.6 Repeat 6.5 in the system browser on the same device to confirm the fix is in the client, not the WebView host
-- [ ] 6.7 Rotate during an active match and confirm the session survives — no reload, no disconnect, canvas resized, still no margin
-- [ ] 6.8 If 6.3 still shows a margin, capture `adb shell dumpsys window | grep -A5 GameWebViewActivity` and the screenshot, and reopen the diagnosis against the design's stated risk before applying further changes
+- [x] 6.1 Dry-run the release workflow and download the signed APK artifact — user-confirmed, 2026-08-16
+- [x] 6.2 Install over 1.6.0 on the Samsung Galaxy S20 FE and confirm the in-place update succeeds — user-confirmed on-device, 2026-08-16
+- [x] 6.3 Launch "Jogar no App" and confirm the game fills the display edge to edge with no surrounding margin, in both portrait and landscape — user-confirmed on-device, 2026-08-16
+- [x] 6.4 Capture the evidence that closes the diagnosis: from the WebView, log `window.devicePixelRatio`, `window.visualViewport.scale`, `document.documentElement.clientWidth/clientHeight` and `window.innerWidth/innerHeight`, and confirm scale is `1` and the two viewport measurements agree — user-confirmed on-device, 2026-08-16
+- [x] 6.5 Steer with the joystick in the in-app WebView, release it, and confirm the snake holds its heading instead of drifting downward — user-confirmed on-device, 2026-08-16
+- [x] 6.6 Repeat 6.5 in the system browser on the same device to confirm the fix is in the client, not the WebView host — user-confirmed on-device, 2026-08-16
+- [x] 6.7 Rotate during an active match and confirm the session survives — no reload, no disconnect, canvas resized, still no margin — user-confirmed on-device, 2026-08-16
+- [x] 6.8 If 6.3 still shows a margin, capture `adb shell dumpsys window | grep -A5 GameWebViewActivity` and the screenshot, and reopen the diagnosis against the design's stated risk before applying further changes — not needed, no margin observed
 
 ## 7. Node DOC — Spec Sync & Archive *(orchestrator)*
 
-- [ ] 7.1 Sync `v1.6.0-scannable-qr-and-orientation` first if it is still unsynced — this change's `REQ-AND-004` delta builds on its text, and syncing out of order would drop the orientation clauses
-- [ ] 7.2 Run `/opsx-sync` to merge `REQ-PROTO-007` into `openspec/specs/protocol/spec.md`, `REQ-REND-005` into `openspec/specs/rendering/spec.md`, and the modified `REQ-AND-004` into `openspec/specs/android/spec.md`
-- [ ] 7.3 Run `npm run spec:doctor` and confirm no orphaned or duplicated requirement identifiers
-- [ ] 7.4 Archive as `openspec/changes/archive/AAAA-MM-DD-v1.6.1-hotfix-mobile-gameplay/`
+- [x] 7.1 Sync `v1.6.0-scannable-qr-and-orientation` first if it is still unsynced — this change's `REQ-AND-004` delta builds on its text, and syncing out of order would drop the orientation clauses — synced v1.5.4, v1.5.5 and v1.6.0 into `openspec/specs/android/spec.md` before this change, in dependency order
+- [x] 7.2 Run `/opsx-sync` to merge `REQ-PROTO-007` into `openspec/specs/protocol/spec.md`, `REQ-REND-005` into `openspec/specs/rendering/spec.md`, and the modified `REQ-AND-004` into `openspec/specs/android/spec.md` — done; `openspec validate --specs --no-interactive` reports 7/7 passed
+- [x] 7.3 Run `npm run spec:doctor` and confirm no orphaned or duplicated requirement identifiers — clean, no orphaned references
+- [x] 7.4 Archive as `openspec/changes/archive/AAAA-MM-DD-v1.6.1-hotfix-mobile-gameplay/` — archived to `openspec/changes/archive/2026-08-16-v1.6.1-hotfix-mobile-gameplay/`, alongside v1.5.4, v1.5.5 and v1.6.0 archived the same day, since none of the four shipped a standalone tag before this branch unified them
 - [ ] 7.5 Tag and publish release `v1.6.1`, then verify the published asset and its checksum
 
 ---
