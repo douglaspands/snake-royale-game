@@ -112,6 +112,19 @@ describe('HUDManager UI Components', () => {
       mass: 10.0,
     });
     expect(document.getElementById('killer-text')?.textContent).toBe(t.defeatedByBoundary);
+    hud.hideGameOver();
+
+    // Boundary death as sent by the server: killerId null, killerName the literal "Arena Boundary".
+    // Regression guard for a bug where the boundary case was detected off killerName's
+    // truthiness instead of killerId, producing an untranslated "Derrotado por Arena Boundary".
+    hud.showGameOver({
+      type: 'PLAYER_DEATH',
+      killerId: null,
+      killerName: 'Arena Boundary',
+      finalScore: 90,
+      mass: 9.0,
+    });
+    expect(document.getElementById('killer-text')?.textContent).toBe(t.defeatedByBoundary);
   });
 
   it('should handle skin button clicks and selection', () => {

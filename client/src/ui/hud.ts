@@ -176,8 +176,8 @@ export class HUDManager {
     const killerTxt = document.getElementById('killer-text');
     const scoreVal = document.getElementById('final-score-val');
     if (killerTxt) {
-      killerTxt.textContent = death.killerName
-        ? t.defeatedByPlayer.replace('{killer}', death.killerName)
+      killerTxt.textContent = death.killerId
+        ? t.defeatedByPlayer.replace('{killer}', death.killerName ?? '')
         : t.defeatedByBoundary;
     }
     if (scoreVal) {
