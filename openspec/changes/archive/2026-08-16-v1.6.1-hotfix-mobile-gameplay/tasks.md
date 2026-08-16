@@ -125,7 +125,7 @@ Allowlist: `client/src/index.css`, and only `_setupResize()` / the `Camera` cons
 - [x] 7.2 Run `/opsx-sync` to merge `REQ-PROTO-007` into `openspec/specs/protocol/spec.md`, `REQ-REND-005` into `openspec/specs/rendering/spec.md`, and the modified `REQ-AND-004` into `openspec/specs/android/spec.md` — done; `openspec validate --specs --no-interactive` reports 7/7 passed
 - [x] 7.3 Run `npm run spec:doctor` and confirm no orphaned or duplicated requirement identifiers — clean, no orphaned references
 - [x] 7.4 Archive as `openspec/changes/archive/AAAA-MM-DD-v1.6.1-hotfix-mobile-gameplay/` — archived to `openspec/changes/archive/2026-08-16-v1.6.1-hotfix-mobile-gameplay/`, alongside v1.5.4, v1.5.5 and v1.6.0 archived the same day, since none of the four shipped a standalone tag before this branch unified them
-- [ ] 7.5 Tag and publish release `v1.6.1`, then verify the published asset and its checksum
+- [x] 7.5 Tag and publish release `v1.6.1`, then verify the published asset and its checksum — tag `v1.6.1` cut from the `main` merge commit (`673de18`, PR #5); `.github/workflows/release.yml` run 31963005521 built, signed and uploaded `snake-royale-server-v1.6.1.apk` (42043065 bytes) and its `.sha256` to the GitHub Release; verified both assets present via `gh release view v1.6.1`
 
 ---
 
