@@ -147,6 +147,20 @@
                     android:padding="8dp"
                     android:contentDescription="QR Code para conectar ao servidor" />
 
+                <!-- Shown in place of the QR when the resolved URL is loopback, i.e.
+                     when there is no LAN address a peer could reach. -->
+                <TextView
+                    android:id="@+id/tvQrHint"
+                    android:layout_width="180dp"
+                    android:layout_height="180dp"
+                    android:gravity="center"
+                    android:padding="12dp"
+                    android:textColor="@color/status_starting"
+                    android:textSize="13sp"
+                    android:textStyle="bold"
+                    android:visibility="gone"
+                    tools:text="@string/qr_needs_wifi" />
+
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"

@@ -13,6 +13,22 @@ import { LocalPredictor } from './net/local_predictor';
 import { DesktopController } from './input/desktop_controller';
 import { VirtualJoystick } from './input/virtual_joystick';
 
+/** Control scheme that currently owns the heading angle of the INPUT stream. */
+export type InputSource = 'desktop' | 'joystick';
+
+/**
+ * Resolves the heading angle from the single control scheme that last produced input,
+ * so a released joystick keeps its own last commanded angle instead of falling back
+ * to an inactive scheme (REQ-PROTO-007).
+ */
+export function resolveInputAngle(
+  source: InputSource,
+  desktop: Pick<DesktopController, 'getAngle'>,
+  joystick: Pick<VirtualJoystick, 'getAngle'>
+): number {
+  return source === 'joystick' ? joystick.getAngle() : desktop.getAngle();
+}
+
 class SnakeRoyaleApp {
   private _canvas: HTMLCanvasElement;
   private _camera: Camera;
@@ -30,10 +46,17 @@ class SnakeRoyaleApp {
   private _lastFrameTimeMs: number = 0;
   private _inputSendIntervalMs: number = 33.33; // 30 Hz steady heartbeat stream
   private _inputSeq: number = 0;
+  private _activeInputSource: InputSource = 'desktop'; // scheme that last fired onInputChange
 
   constructor() {
     this._canvas = document.getElementById('game-canvas') as HTMLCanvasElement;
-    this._camera = new Camera(window.innerWidth, window.innerHeight, window.devicePixelRatio || 1);
+    // Layout viewport (never window.inner*, which shrinks with the host page scale)
+    const docEl = document.documentElement;
+    this._camera = new Camera(
+      docEl.clientWidth,
+      docEl.clientHeight,
+      window.devicePixelRatio || 1
+    );
     this._renderer = new GameRenderer(this._canvas, this._camera);
     this._hud = new HUDManager();
     this._wsClient = new WebSocketClient();
@@ -54,8 +77,10 @@ class SnakeRoyaleApp {
   private _setupResize(): void {
     const handleResize = () => {
       const dpr = window.devicePixelRatio || 1;
-      const width = window.innerWidth;
-      const height = window.innerHeight;
+      // Layout viewport: unaffected by page scale, so sizing cannot feed back into
+      // an overflow -> shrink-to-fit -> resize loop inside a WebView.
+      const width = document.documentElement.clientWidth;
+      const height = document.documentElement.clientHeight;
 
       this._canvas.width = width * dpr;
       this._canvas.height = height * dpr;
@@ -111,12 +136,15 @@ class SnakeRoyaleApp {
       return;
     }
 
-    let angle = this._desktopController.getAngle();
-    let boost = this._desktopController.isBoost();
+    // Heading comes from the single last-active scheme; boost stays an OR of both,
+    // so the double-tap & hold turbo keeps working whoever owns the angle.
+    const angle = resolveInputAngle(
+      this._activeInputSource,
+      this._desktopController,
+      this._virtualJoystick
+    );
 
-    if (this._virtualJoystick.isActive()) {
-      angle = this._virtualJoystick.getAngle();
-    }
+    let boost = this._desktopController.isBoost();
     if (this._virtualJoystick.isBoost()) {
       boost = true;
     }
@@ -129,10 +157,12 @@ class SnakeRoyaleApp {
   private _setupInputListeners(): void {
     // Instant Reflex Event Handlers (Dispatches on significant direction changes < 1ms)
     this._desktopController.onInputChange = () => {
+      this._activeInputSource = 'desktop';
       this._sendCurrentInput();
     };
 
     this._virtualJoystick.onInputChange = () => {
+      this._activeInputSource = 'joystick';
       this._sendCurrentInput();
     };
 
@@ -151,13 +181,6 @@ class SnakeRoyaleApp {
 
     window.addEventListener('pointerup', endPointer);
     window.addEventListener('pointercancel', endPointer);
-
-    // Track mouse aim relative to screen center
-    window.addEventListener('mousemove', (e: MouseEvent) => {
-      const cx = window.innerWidth / 2;
-      const cy = window.innerHeight / 2;
-      this._desktopController.setMousePosition(e.clientX, e.clientY, cx, cy);
-    });
   }
 
   private _setupUI(): void {

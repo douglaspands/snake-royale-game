@@ -12,6 +12,7 @@ import android.net.wifi.WifiManager
 import android.os.Build
 import android.os.IBinder
 import android.os.PowerManager
+import android.util.Log
 import androidx.core.app.NotificationCompat
 import com.chaquo.python.Python
 import com.chaquo.python.android.AndroidPlatform
@@ -20,10 +21,20 @@ class ServerForegroundService : Service() {
 
     private var wakeLock: PowerManager.WakeLock? = null
     private var wifiLock: WifiManager.WifiLock? = null
+
+    // Written from the bootstrap thread, read from the main thread on stop.
+    @Volatile
     private var isServerActive = false
 
     companion object {
+        const val TAG = "SnakeServerService"
         const val CHANNEL_ID = "snake_server_channel"
+
+        /** Reason for the most recent startup failure, or null if the last start succeeded. */
+        @Volatile
+        var lastError: String? = null
+            internal set
+
         const val NOTIFICATION_ID = 1001
         const val ACTION_START = "com.snakeroyale.host.ACTION_START"
         const val ACTION_STOP = "com.snakeroyale.host.ACTION_STOP"
@@ -68,18 +79,34 @@ class ServerForegroundService : Service() {
         }
 
         val port = intent?.getIntExtra(EXTRA_PORT, 8000) ?: 8000
-        startServerInternal(port)
 
-        val notification = buildNotification(port)
-        startForeground(NOTIFICATION_ID, notification)
+        // startForeground must be reached within a few seconds of
+        // startForegroundService or Android 12+ kills the service with
+        // ForegroundServiceDidNotStartInTimeException. Asset extraction and
+        // Python.start() are both slow enough to blow that budget on a cold start,
+        // so the notification goes up first and the startup runs off the main thread.
+        startForeground(NOTIFICATION_ID, buildNotification(port))
+
+        Thread({ startServerInternal(port) }, "SnakeServerBootstrap").start()
 
         return START_STICKY
     }
 
-    private fun startServerInternal(port: Int) {
-        if (isServerActive) return
+    private fun startServerInternal(port: Int): Boolean {
+        if (isServerActive) return true
 
         try {
+            // The SPA ships inside the APK under assets/client_dist, which is not a
+            // filesystem path. Extract it before handing the path to Python, which
+            // serves it through Starlette's FileResponse. See REQ-AND-003.
+            val versionCode = packageManager
+                .getPackageInfo(packageName, 0)
+                .let { if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) it.longVersionCode.toInt() else @Suppress("DEPRECATION") it.versionCode }
+            val assets = AssetExtractor.extract(this, "client_dist", versionCode)
+            if (assets.fileCount == 0) {
+                Log.e(TAG, "No SPA assets extracted; the server would serve a blank page")
+            }
+
             if (!Python.isStarted()) {
                 Python.start(AndroidPlatform(this))
             }
@@ -88,13 +115,19 @@ class ServerForegroundService : Service() {
             val lanUrl = NetworkHelper.getPrimaryServerUrl(port)
             val ipOnly = lanUrl.removePrefix("http://").substringBefore(":")
 
-            // Extract assets or pass path if available
-            val staticDir = "${filesDir.absolutePath}/client_dist"
-
-            entry.callAttr("start_server", "0.0.0.0", port, staticDir, ipOnly)
+            entry.callAttr("start_server", "0.0.0.0", port, assets.dir.absolutePath, ipOnly)
             isServerActive = true
+            lastError = null
+            Log.i(TAG, "Embedded server start requested on 0.0.0.0:$port (static=${assets.dir})")
+            return true
         } catch (e: Exception) {
-            e.printStackTrace()
+            // Previously this swallowed the exception into a bare stack trace, which
+            // is why three releases shipped with the server broken and the dashboard
+            // still reporting "Online". See REQ-AND-010.
+            lastError = e.message ?: e::class.java.simpleName
+            Log.e(TAG, "Failed to start the embedded server on port $port", e)
+            isServerActive = false
+            return false
         }
     }
 
@@ -108,7 +141,7 @@ class ServerForegroundService : Service() {
                 entry.callAttr("stop_server")
             }
         } catch (e: Exception) {
-            e.printStackTrace()
+            Log.e(TAG, "Failed to stop the embedded server cleanly", e)
         } finally {
             isServerActive = false
         }
@@ -185,7 +218,7 @@ class ServerForegroundService : Service() {
                 acquire()
             }
         } catch (e: Exception) {
-            e.printStackTrace()
+            Log.e(TAG, "Failed to acquire wake/wifi locks", e)
         }
     }
 
@@ -195,7 +228,7 @@ class ServerForegroundService : Service() {
             if (wakeLock?.isHeld == true) wakeLock?.release()
             if (wifiLock?.isHeld == true) wifiLock?.release()
         } catch (e: Exception) {
-            e.printStackTrace()
+            Log.e(TAG, "Failed to release wake/wifi locks", e)
         }
         super.onDestroy()
     }

@@ -1,7 +1,7 @@
 # 🐍 Snake Battle Royale Multiplayer
 
 [![CI](https://github.com/douglas/snake-game/actions/workflows/ci.yml/badge.svg)](file:///.github/workflows/ci.yml)
-[![OpenSpec v1.5.3-ANDROID-HOST](https://img.shields.io/badge/OpenSpec-v1.5.3--ANDROID--HOST-00f0ff.svg)](file:///home/douglas/Workspace/claude/snake-game/openspec/)
+[![OpenSpec v1.6.1-ANDROID-HOST](https://img.shields.io/badge/OpenSpec-v1.6.1--ANDROID--HOST-00f0ff.svg)](file:///home/douglas/Workspace/claude/snake-game/openspec/)
 [![Python 3.12+](https://img.shields.io/badge/Python-3.12%2B-blue.svg)](file:///home/douglas/Workspace/claude/snake-game/pyproject.toml)
 [![Starlette](https://img.shields.io/badge/Starlette-0.36%2B-009688.svg)](file:///home/douglas/Workspace/claude/snake-game/server/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.4-blue.svg)](file:///home/douglas/Workspace/claude/snake-game/client/)
@@ -149,4 +149,70 @@ graph TD
     N_ROOT --> N_B1 --> N_B2 --> N_B3 --> N_INT
     N_ROOT --> N_F1 --> N_F2 --> N_F3 --> N_INT
     N_INT --> N_GATE --> N_DOC
+```
+
+---
+
+## 📱 8. Release do APK Android (assinatura)
+
+O APK publicado nas *GitHub Releases* é um build **de release assinado**. Um build de
+debug não é distribuível: o Android 13 recusa o sideload de pacotes `debuggable`
+assinados por chave desconhecida, e a chave efêmera do runner tornaria toda
+atualização incompatível (`INSTALL_FAILED_UPDATE_INCOMPATIBLE`). Ver `REQ-AND-009`.
+
+### Gerar a keystore (uma única vez)
+
+```bash
+keytool -genkeypair -v -keystore snake-royale-release.jks \
+  -keyalg RSA -keysize 4096 -validity 10000 -alias snake-royale
+
+base64 -w0 snake-royale-release.jks   # conteúdo do secret ANDROID_KEYSTORE_BASE64
+```
+
+> ⚠️ **Faça backup da keystore fora do repositório.** Perdê-la impede publicar
+> qualquer atualização instalável sobre uma versão já instalada — os usuários
+> precisariam desinstalar o app e perder os dados locais. O arquivo é bloqueado por
+> `.gitignore` (`*.jks`, `*.keystore`, `android/keystore.properties`).
+
+### Secrets necessários
+
+Em *Settings → Secrets and variables → Actions*:
+
+| Secret | Conteúdo |
+| :--- | :--- |
+| `ANDROID_KEYSTORE_BASE64` | keystore `.jks` codificada em base64 |
+| `ANDROID_KEYSTORE_PASSWORD` | senha do keystore |
+| `ANDROID_KEY_ALIAS` | alias da chave (`snake-royale`) |
+| `ANDROID_KEY_PASSWORD` | senha da chave |
+
+### Build local assinado (opcional)
+
+Crie `android/keystore.properties` (não versionado):
+
+```properties
+storeFile=/caminho/absoluto/snake-royale-release.jks
+storePassword=...
+keyAlias=snake-royale
+keyPassword=...
+```
+
+Sem esse arquivo e sem as variáveis de ambiente o projeto continua configurando
+normalmente — apenas o `release` sai sem assinatura, e `assembleDebug` segue funcionando.
+
+### Instalar no aparelho (Play Protect)
+
+O APK é distribuído por sideload, fora da Play Store. Na primeira instalação o
+Android 13+ mostra **"O app não foi instalado"** sem explicar o motivo: é o Play
+Protect recusando um pacote sem reputação no Google. Não é defeito do build — é como
+o sideload funciona para qualquer app não publicado.
+
+Para instalar: *Play Store → seu perfil → Play Protect → ⚙️ → desativar "Verificar
+apps"*, instale, e **reative em seguida**.
+
+### Conferir um APK baixado
+
+```bash
+sha256sum -c snake-royale-server-vX.Y.Z.apk.sha256        # download íntegro?
+apksigner verify --print-certs --verbose *.apk            # v2/v3, signer != CN=Android Debug
+aapt dump badging *.apk | grep -E "^package:|debuggable"  # sem .debug, sem debuggable
 ```
