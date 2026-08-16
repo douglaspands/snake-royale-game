@@ -1,7 +1,36 @@
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
     id("com.chaquo.python")
+}
+
+// Release signing credentials, resolved from the environment first (CI passes them
+// through the process env so no plaintext password ever lands in the workspace) and
+// from an unversioned android/keystore.properties second (local release builds).
+// Returns null when neither source is complete: Gradle evaluates signingConfigs at
+// configuration time, so referencing a missing keystore would break every clone that
+// only ever builds debug. See REQ-AND-009.
+val releaseSigning: Map<String, String>? = run {
+    val fromEnv = mapOf(
+        "storeFile" to System.getenv("ANDROID_KEYSTORE_FILE"),
+        "storePassword" to System.getenv("ANDROID_KEYSTORE_PASSWORD"),
+        "keyAlias" to System.getenv("ANDROID_KEY_ALIAS"),
+        "keyPassword" to System.getenv("ANDROID_KEY_PASSWORD"),
+    )
+    val resolved = if (fromEnv.values.none { it.isNullOrBlank() }) {
+        fromEnv.mapValues { it.value!! }
+    } else {
+        val propsFile = rootProject.file("keystore.properties")
+        if (!propsFile.isFile) return@run null
+        val props = Properties().apply { propsFile.inputStream().use { load(it) } }
+        val fromFile = listOf("storeFile", "storePassword", "keyAlias", "keyPassword")
+            .associateWith { props.getProperty(it) }
+        if (fromFile.values.any { it.isNullOrBlank() }) return@run null
+        fromFile.mapValues { it.value!! }
+    }
+    if (rootProject.file(resolved.getValue("storeFile")).isFile) resolved else null
 }
 
 android {
@@ -12,8 +41,8 @@ android {
         applicationId = "com.snakeroyale.host"
         minSdk = 24
         targetSdk = 34
-        versionCode = 3
-        versionName = "1.5.3"
+        versionCode = 4
+        versionName = "1.5.4"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
@@ -24,13 +53,43 @@ android {
         }
     }
 
+    signingConfigs {
+        // Bound to a local first: a script-level `val` is a property of the generated
+        // script class, so relying on a smart cast here risks a configuration-time
+        // compile error -- the exact failure mode this project has already spent
+        // three hotfixes on.
+        val credentials = releaseSigning
+        if (credentials != null) {
+            create("release") {
+                storeFile = rootProject.file(credentials.getValue("storeFile"))
+                storePassword = credentials.getValue("storePassword")
+                keyAlias = credentials.getValue("keyAlias")
+                keyPassword = credentials.getValue("keyPassword")
+
+                // AGP omits v1 when minSdk >= 24. Declared explicitly here because
+                // OEM sideload installers are stricter than AOSP, and because v3 is
+                // what makes future key rotation possible at all. See REQ-AND-009.
+                enableV1Signing = true
+                enableV2Signing = true
+                enableV3Signing = true
+            }
+        }
+    }
+
     buildTypes {
         release {
+            // Chaquopy resolves Java classes reflectively from Python, so R8 would
+            // strip names the Python side looks up at runtime: the build would
+            // succeed and the server would fail on start. Keep rules are separate
+            // work -- see the v1.5.4 design.md, Decision 3.
             isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            // Left unsigned when no credentials are available, so a clone without
+            // the keystore still configures and can build debug.
+            signingConfig = signingConfigs.findByName("release")
         }
         debug {
             applicationIdSuffix = ".debug"

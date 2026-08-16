@@ -69,3 +69,9 @@ android/app/src/main/python/server/
 *.apk
 *.aab
 
+# Android signing material — never commit; losing it prevents publishing
+# updates installable over an existing install. See REQ-AND-009.
+*.keystore
+*.jks
+android/keystore.properties
+
