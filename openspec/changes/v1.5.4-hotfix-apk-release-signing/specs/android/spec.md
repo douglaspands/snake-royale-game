@@ -1,12 +1,12 @@
 ## ADDED Requirements
 
 ### Requirement: REQ-AND-009 Release APK Signing & Device Installability
-The APK attached to a GitHub Release MUST be built from the `release` variant and MUST be signed with a persistent project keystore whose credentials are supplied at build time from the environment or from an unversioned `android/keystore.properties`. The signing configuration MUST enable the v1, v2 and v3 signature schemes. The published APK MUST NOT be debuggable, MUST NOT carry a debug `applicationIdSuffix`, and MUST NOT be signed by the AGP-generated debug certificate. The keystore MUST NOT be committed to the repository, and `.gitignore` MUST exclude `*.keystore`, `*.jks` and `android/keystore.properties`. The signing identity MUST remain stable across releases so that a newer version installs over an older one in place.
+The APK attached to a GitHub Release MUST be built from the `release` variant and MUST be signed with a persistent project keystore whose credentials are supplied at build time from the environment or from an unversioned `android/keystore.properties`. The signing configuration MUST enable the v2 and v3 signature schemes. It MUST NOT require the v1 (JAR) scheme, which carries no benefit at `minSdk 24` and which AGP omits at that level regardless of configuration. The published APK MUST NOT be debuggable, MUST NOT carry a debug `applicationIdSuffix`, and MUST NOT be signed by the AGP-generated debug certificate. The keystore MUST NOT be committed to the repository, and `.gitignore` MUST exclude `*.keystore`, `*.jks` and `android/keystore.properties`. The signing identity MUST remain stable across releases so that a newer version installs over an older one in place.
 
 #### Scenario: Published APK is a signed, non-debuggable release build
 - **GIVEN** the release workflow ran with the signing secrets configured
 - **WHEN** the published APK is inspected with `apksigner verify --print-certs` and `aapt dump badging`
-- **THEN** the signer subject MUST NOT be `CN=Android Debug`, the v1, v2 and v3 schemes MUST all report as verified, the package name MUST be `com.snakeroyale.host` with no `.debug` suffix, and the badging output MUST NOT report `application-debuggable`
+- **THEN** the signer subject MUST NOT be `CN=Android Debug`, the v2 and v3 schemes MUST both report as verified, the package name MUST be `com.snakeroyale.host` with no `.debug` suffix, and the badging output MUST NOT report `application-debuggable`
 
 #### Scenario: Clean installation on a supported device
 - **GIVEN** a device running Android 13 on the `arm64-v8a` ABI with no prior version of the application installed

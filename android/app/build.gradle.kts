@@ -66,10 +66,12 @@ android {
                 keyAlias = credentials.getValue("keyAlias")
                 keyPassword = credentials.getValue("keyPassword")
 
-                // AGP omits v1 when minSdk >= 24. Declared explicitly here because
-                // OEM sideload installers are stricter than AOSP, and because v3 is
-                // what makes future key rotation possible at all. See REQ-AND-009.
-                enableV1Signing = true
+                // v1 (JAR signing) is only meaningful below API 24, and minSdk here
+                // is 24 -- AGP omits it regardless of what this flag says, as the
+                // first signed dry-run confirmed. It is also a liability on its own
+                // (Janus, CVE-2017-13156). v2 is what every target device verifies;
+                // v3 is what makes future key rotation possible. See REQ-AND-009.
+                enableV1Signing = false
                 enableV2Signing = true
                 enableV3Signing = true
             }

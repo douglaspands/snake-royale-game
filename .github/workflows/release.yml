@@ -131,7 +131,9 @@ jobs:
             echo "::error::APK is signed with the AGP debug certificate; refusing to publish."
             exit 1
           fi
-          for scheme in "v1 scheme (JAR signing): true" "v2 scheme (APK Signature Scheme v2): true" "v3 scheme (APK Signature Scheme v3): true"; do
+          # v1 is deliberately absent: minSdk is 24, so AGP omits JAR signing and
+          # every target device verifies v2. Requiring it here would be unsatisfiable.
+          for scheme in "v2 scheme (APK Signature Scheme v2): true" "v3 scheme (APK Signature Scheme v3): true"; do
             echo "$CERTS" | grep -qF "$scheme" || { echo "::error::Missing signature scheme -- expected '$scheme'"; exit 1; }
           done
 

@@ -203,6 +203,6 @@ normalmente — apenas o `release` sai sem assinatura, e `assembleDebug` segue f
 
 ```bash
 sha256sum -c snake-royale-server-vX.Y.Z.apk.sha256        # download íntegro?
-apksigner verify --print-certs --verbose *.apk            # v1/v2/v3, signer != CN=Android Debug
+apksigner verify --print-certs --verbose *.apk            # v2/v3, signer != CN=Android Debug
 aapt dump badging *.apk | grep -E "^package:|debuggable"  # sem .debug, sem debuggable
 ```
