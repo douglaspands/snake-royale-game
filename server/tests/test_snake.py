@@ -69,6 +69,32 @@ def test_snake_boost_drain_and_auto_cutoff():
     assert snake.target_segment_count == 3
 
 
+def test_snake_score_derived_from_mass_not_historical_max():
+    # score = floor(mass * 10) at all times; boost's mass drain must
+    # reduce score in lockstep, with no historical maximum preserved.
+    snake = Snake(
+        player_id="p-1",
+        nickname="Viper",
+        spawn_x=500.0,
+        spawn_y=500.0,
+        initial_mass=10.0,
+    )
+    assert snake.score == 100
+
+    snake.set_input(target_angle=0.0, boost=True)
+    assert snake.boost is True
+
+    # Step 0.5s of boost -> drains 2.0 mass (10.0 -> 8.0)
+    snake.step(0.5)
+    assert pytest.approx(snake.mass, 0.1) == 8.0
+    assert snake.score == 80
+
+    # Growing again must not resurrect the old peak; score tracks mass exactly.
+    snake.add_mass(1.0)
+    assert pytest.approx(snake.mass, 0.1) == 9.0
+    assert snake.score == 90
+
+
 def test_snake_boost_disabled_when_at_minimum_mass():
     snake = Snake(
         player_id="p-1",
