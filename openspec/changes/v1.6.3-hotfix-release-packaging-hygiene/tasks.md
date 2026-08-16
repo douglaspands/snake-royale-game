@@ -37,11 +37,12 @@ Sequential, single session. Three independent fixes; `B1`, `B2` and `B3` may be 
 
 ## 5. Node VAL — On-Device Validation *(requires the physical device — user-executed)*
 
-- [ ] 5.1 Dry-run the release workflow and compare the APK size against the previous release — it should drop by roughly the size of the orphaned bundles
-- [ ] 5.2 Install the APK and confirm `/health` reports the new version from the device browser
-- [ ] 5.3 Record which branch the packaged runtime takes — the real version or the unknown fallback — so `design.md` D3's open question is closed with evidence
-- [ ] 5.4 Confirm the dashboard still shows Online when the server is up and Offline when it genuinely fails to start
-- [ ] 5.5 Confirm "Jogar no App" and "Jogar no Navegador" both still load the game
+- [ ] 5.1 Dry-run the release workflow and confirm the APK is unchanged in size — CI already builds from a clean checkout, so fix 1 must produce **no** difference in the published artifact. A size drop here would mean the CI sync was also accumulating, contradicting the evidence in `proposal.md`
+- [ ] 5.2 Build locally with `npm run android:build` and confirm the resulting debug APK's `assets/client_dist/assets/` now matches the CI artifact's exactly (`unzip -l`)
+- [ ] 5.3 Install the APK and confirm `/health` reports the new version from the device browser
+- [ ] 5.4 Record which branch the packaged runtime takes — the real version or the unknown fallback — so `design.md` D3's open question is closed with evidence
+- [ ] 5.5 Confirm the dashboard still shows Online when the server is up and Offline when it genuinely fails to start
+- [ ] 5.6 Confirm "Jogar no App" and "Jogar no Navegador" both still load the game
 
 ## 6. Node DOC — Spec Sync & Archive
 

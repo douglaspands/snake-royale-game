@@ -2,7 +2,11 @@
 
 Three defects surfaced while validating `v1.6.1`. None affects gameplay; all three degrade the release artifact or the ability to diagnose it.
 
-**1. Superseded client bundles accumulate inside the APK.** `npm run android:sync-client` is `cd client && npm run build && mkdir -p ../android/app/src/main/assets/client_dist && cp -r dist/* ../android/app/src/main/assets/client_dist/`. Vite emits content-hashed filenames, so each build produces a new `assets/index-<hash>.js` and `assets/index-<hash>.css`; `cp -r` adds them without removing the previous ones. After the `v1.6.1` sync the directory holds two generations side by side — the live `index-DDbdtsrR.js` / `index-CVj7B72O.css` and the orphaned `index-zn7FLEeE.js` / `index-D0PuLDD6.css`. The copied `index.html` references only the current pair, so the app is correct, but every superseded bundle ships inside the APK and the payload grows monotonically with each release. This is also precisely the failure mode `v1.5.5` task 8.7 ("confirm the served bundle is the new one, not the previous release's") was written to catch, and a stale-asset directory makes that check ambiguous.
+**1. Superseded client bundles accumulate in the local working copy.** `npm run android:sync-client` is `cd client && npm run build && mkdir -p ../android/app/src/main/assets/client_dist && cp -r dist/* ../android/app/src/main/assets/client_dist/`. Vite emits content-hashed filenames, so each build produces a new `assets/index-<hash>.js` and `assets/index-<hash>.css`; `cp -r` adds them without removing the previous ones. After the `v1.6.1` sync the directory holds two generations side by side — the live `index-DDbdtsrR.js` / `index-CVj7B72O.css` and the orphaned `index-zn7FLEeE.js` / `index-D0PuLDD6.css`.
+
+**The released APK is not affected, and this proposal originally claimed otherwise.** `android/app/src/main/assets/client_dist/` is gitignored (`.gitignore:67`), so a CI checkout never contains it, and the workflow's own "Sync Web Client to Android Assets" step does the same `mkdir -p` + `cp -r` into an empty directory. Verified against the `v1.6.1` dry-run artifact: `unzip -l` on the produced APK lists exactly `assets/client_dist/assets/index-CVj7B72O.css` and `index-DDbdtsrR.js` and nothing else.
+
+What remains is a local-workflow defect, and it is worth fixing on its own terms: `npm run android:build` (`android:sync-client` then `assembleDebug`) packages whatever is in the working copy, so a locally built debug APK *does* carry the orphans and diverges from what CI produces from the same commit. That divergence is exactly what makes `v1.5.5` task 8.7 ("confirm the served bundle is the new one, not the previous release's") ambiguous when checked locally: a stale directory cannot distinguish "the new bundle is being served" from "the old one happens to still be present".
 
 **2. `/health` reports a version identity frozen at `1.0.0-VIPER`.** `server/app/main.py:50` hardcodes that string. It has not tracked a release since v1.0.0, so the endpoint the Android dashboard polls for its Online/Offline state — and the first thing anyone curls when diagnosing a device — reports a version six releases stale. There is no requirement governing the endpoint's payload today, so nothing was violated; the identity was simply never wired up.
 
@@ -28,9 +32,10 @@ Three defects surfaced while validating `v1.6.1`. None affects gameplay; all thr
 - `server/app/main.py` — the `health_check` payload.
 - `server/tests/` — coverage for the health payload's version field.
 - `.gitignore` — the worktrees path.
-- `android/app/src/main/assets/client_dist/assets/` — the two orphaned files are removed by the first corrected sync. This directory is generated; per `CLAUDE.md` it is never edited by hand, and this change edits the script that produces it, not its contents.
-- **No client source change.** The compiled output is unaffected; only which copies of it survive in the Android assets.
+- `android/app/src/main/assets/client_dist/assets/` — the two orphaned files are removed by the first corrected sync. This directory is generated and gitignored; per `CLAUDE.md` it is never edited by hand, and this change edits the script that produces it, not its contents.
+- **No client source change.** The compiled output is unaffected; only which copies of it survive in the local Android assets.
 - **No gameplay change.** No protocol, physics or rendering behaviour is touched.
+- **No change to the released APK's contents.** Fix 1 makes locally built APKs match what CI already produces; it does not alter the CI artifact. Expect no size reduction in the published release.
 
 ## Non-goals
 

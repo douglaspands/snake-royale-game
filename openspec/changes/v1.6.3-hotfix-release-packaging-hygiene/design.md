@@ -32,6 +32,7 @@ Chaquopy installs the server into the APK, and the embedded runtime may not expo
 
 ## Risks / Trade-offs
 
+- **[Note]** The scope of fix 1 was narrowed after evidence: the released APK was never affected, only locally built ones. See `proposal.md` § Why. The requirement is kept because build-environment-dependent output is a real defect on its own, but nobody should expect the published artifact to change.
 - **[Risk]** `rm -rf` on a path built from a relative string in an npm script. A typo, or the script running from an unexpected working directory, deletes the wrong tree. → Mitigation: the script already `cd client` first and the path is written relative to that, identical to the existing `cp` target in the same line; task `1.2` verifies the resolved path before the script is run for real, and the directory is regenerated immediately by the `cp` that follows.
 - **[Risk]** `importlib.metadata` returns the version of an unexpected distribution if the project name in `pyproject.toml` and the installed name diverge. → Mitigation: task `1.3` asserts the value returned matches `pyproject.toml` in the test suite, so a divergence fails the gate rather than shipping.
 - **[Risk]** Under Chaquopy the metadata lookup may fall back to `"unknown"`, making `/health` less informative on the exact platform where it is most used. → This is strictly better than today's confidently wrong `1.0.0-VIPER`, and task `3.3` records which branch the device takes so a follow-up can address it with evidence if needed.
