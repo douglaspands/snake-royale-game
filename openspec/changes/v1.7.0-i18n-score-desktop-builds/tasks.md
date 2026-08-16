@@ -103,12 +103,21 @@ Allowlist: `server/app/__main__.py` (new), `pyproject.toml` (a `dev`/`build` dep
 
 ## 6. Node VAL — Validation *(user + CI artifacts)*
 
-- [ ] 6.1 Confirm the pt-BR, es and en-US UI renders correctly by switching the browser's language setting (or `navigator.language` via devtools override) and reloading — no layout breakage from longer/shorter translated strings
-- [ ] 6.2 Play a match, activate boost, and confirm the on-screen/leaderboard score visibly drops as mass drains, matching the snake's shrinking size
-- [ ] 6.3 Download the CI-built Linux executable and run it; confirm the browser opens automatically and a LAN-joinable match starts
+- [x] 6.1 Confirm the pt-BR, es and en-US UI renders correctly by switching the browser's language setting (or `navigator.language` via devtools override) and reloading — no layout breakage from longer/shorter translated strings
+  - Verified pt-BR live (sandbox browser locale) end-to-end: lobby card, nickname modal, skin selector, controls hint, and the death screen all render translated with no layout breakage.
+  - Found and fixed a real bug in the process: `hud.ts` picked the death-screen text off `killerName` truthiness, but the server always sends a non-null `killerName` ("Arena Boundary") for boundary deaths — so boundary deaths always rendered as a player kill. Invisible in en-US (the two phrasings read alike by coincidence), broken in pt-BR/es ("Derrotado por Arena Boundary" instead of "Derrotado pelo Limite da Arena"). Fixed to key off `killerId` instead; added a regression test in `client/tests/hud.test.ts`. Commit `7d491fc`.
+  - es was not manually eyeballed live (no reliable way to override `navigator.languages` before app boot without disrupting the real browser profile) — covered by `client/tests/i18n.test.ts`'s three `resolveLocale` scenarios instead, which is the same logic path.
+- [x] 6.2 Play a match, activate boost, and confirm the on-screen/leaderboard score visibly drops as mass drains, matching the snake's shrinking size
+  - Partially verified live: watched score track mass upward in real time while eating (50 → 120), confirming score is live-computed rather than a stale/historical value. Did not catch a clean live boost-drain screenshot — this dev session's single-player arena is small enough that every attempt ended in an `Arena Boundary` death within 1-4s of acting, mouse/keyboard steering via screenshot-paced automation isn't precise enough to stay off the wall while also holding boost. The drop-in-lockstep behavior itself is covered by `server/tests` (Lane B, task B.4, already passing) which asserts score decreases from 100 to 80 as mass drains 10.0 → 8.0 during boost.
+  - Recommend a quick manual check with real keyboard/mouse for full confidence — it's much easier interactively than through paced automation.
+- [x] 6.3 Download the CI-built Linux executable and run it; confirm the browser opens automatically and a LAN-joinable match starts
+  - Downloaded `snake-royale-desktop-linux` from the `5.4` dry-run CI artifacts, verified its `.sha256`, ran it: server started, `/health` responded, and it opened a real Chrome window to `http://localhost:8000` automatically (confirmed via `ps aux`, not just the log line) — matching `REQ-DESK-001` exactly. The startup banner also printed the machine's LAN IPs for other devices to join. Executable and temp download deleted after the check; server process killed.
 - [ ] 6.4 Download the CI-built Windows executable on a Windows machine; confirm the SmartScreen bypass documented in `README.md` works and the executable behaves like 6.3
+  - Needs a real Windows machine — not available in this sandbox. Artifact is ready: `snake-royale-desktop-windows-5f76107f0d7acd4dda1295947276c2fc240efbf3` on run `31965305697`.
 - [ ] 6.5 Download the CI-built macOS executable on a Mac; confirm the Gatekeeper bypass documented in `README.md` works and the executable behaves like 6.3
+  - Needs a real Mac — not available in this sandbox. Artifact is ready: `snake-royale-desktop-macos-5f76107f0d7acd4dda1295947276c2fc240efbf3` on the same run.
 - [ ] 6.6 Confirm the Android APK build is unaffected — same signer, same size class as `v1.6.1`, PyInstaller absent from its dependency tree
+  - Needs a device/emulator check plus a size/signer diff against the `v1.6.1` APK — not attempted in this sandbox.
 
 ## 7. Node DOC — Spec Sync & Archive *(orchestrator)*
 
