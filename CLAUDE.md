@@ -40,6 +40,7 @@ Backend isolado: `uv run pytest` · Frontend isolado: `cd client && npm test`
 2. Todo spec tem as seções `## Purpose` e `## Requirements`.
 3. Cada requisito usa o cabeçalho `### Requirement: REQ-<CAP>-<NNN> <Título>`, redação em **RFC 2119** (MUST, SHALL, SHOULD, MAY) ou EARS, e **pelo menos um** bloco `#### Scenario:` com cláusulas `- **WHEN**` / `- **THEN**`.
 4. Deltas de change usam blocos `## ADDED Requirements` / `## MODIFIED Requirements` e casam com o spec principal **pelo identificador do requisito** — mantenha o cabeçalho idêntico.
+5. **Sempre antes de iniciar a escrita de uma spec (proposal, design, tasks ou spec deltas) em `openspec/changes/`, criar uma branch dedicada a partir de `main`** — nunca escrever specs diretamente na `main`. Convenção de nome (boas práticas Git/GitHub, ver precedentes com `git branch -a`): `feature/<slug>` para novas capacidades, `hotfix/<versão>-<slug>` para correções, espelhando o `change id` da spec. Publicar a branch no remoto assim que criada (`git push -u origin <branch>`), antes de escrever qualquer artefato.
 
 ### Workflows (slash commands)
 
