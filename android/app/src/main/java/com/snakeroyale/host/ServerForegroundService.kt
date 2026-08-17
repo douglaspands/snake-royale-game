@@ -207,7 +207,12 @@ class ServerForegroundService : Service() {
                 PowerManager.PARTIAL_WAKE_LOCK,
                 "SnakeRoyale::ServerWakeLock"
             ).apply {
-                acquire(10 * 60 * 1000L /* 10 minutes timeout refresh */)
+                // No timeout: a fixed-duration acquire() silently lapses after its
+                // window, letting the device resume CPU throttling mid-session
+                // (REQ-AND-005). onDestroy() below unconditionally releases this
+                // lock when the service stops, so an indefinite hold has no
+                // corresponding leak risk.
+                acquire()
             }
 
             val wifiManager = applicationContext.getSystemService(Context.WIFI_SERVICE) as WifiManager
