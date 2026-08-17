@@ -62,6 +62,7 @@ WORLD_SNAPSHOT_SCHEMA = {
         "type": {"type": "string", "enum": ["WORLD_SNAPSHOT"]},
         "tick": {"type": "integer", "minimum": 0},
         "timestamp": {"type": "number"},
+        "tickDurationMs": {"type": "number"},
         "snakes": {
             "type": "array",
             "items": {

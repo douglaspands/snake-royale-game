@@ -43,15 +43,25 @@ class ConnectionManager:
                 logger.warning(f"Error sending message to {player_id}: {e}")
 
     async def broadcast_snapshot(self, snapshot: dict[str, Any]) -> None:
-        """Broadcasts WORLD_SNAPSHOT to all connected players."""
-        payload_str = json.dumps(snapshot)
-        disconnected = []
+        """Broadcasts WORLD_SNAPSHOT to all connected players concurrently.
 
-        for player_id, ws in list(self.active_sockets.items()):
-            try:
-                await ws.send_text(payload_str)
-            except Exception:
-                disconnected.append(player_id)
+        Sends are dispatched concurrently via asyncio.gather so a single
+        slow/backpressured client cannot delay delivery to the others within
+        the same tick (REQ-LOOP-003).
+        """
+        payload_str = json.dumps(snapshot)
+        items = list(self.active_sockets.items())
+
+        results = await asyncio.gather(
+            *(ws.send_text(payload_str) for _, ws in items),
+            return_exceptions=True,
+        )
+
+        disconnected = [
+            player_id
+            for (player_id, _), result in zip(items, results, strict=True)
+            if isinstance(result, Exception)
+        ]
 
         for pid in disconnected:
             await self.disconnect(pid)
