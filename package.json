@@ -17,7 +17,8 @@
     "spec:list": "openspec list",
     "spec:view": "openspec view",
     "android:sync-client": "cd client && npm run build && mkdir -p ../android/app/src/main/assets/client_dist && cp -r dist/* ../android/app/src/main/assets/client_dist/",
-    "android:build": "npm run android:sync-client && cd android && gradle assembleDebug"
+    "android:build": "npm run android:sync-client && cd android && gradle copyDebugApkToDist",
+    "android:build:release": "npm run android:sync-client && cd android && gradle copyReleaseApkToDist"
   },
   "keywords": [
     "snake",

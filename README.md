@@ -184,14 +184,17 @@ repositório não versiona o wrapper (`gradlew`), use o `gradle` do seu ambiente
 ```bash
 npm run android:build
 # equivalente a:
-#   npm run android:sync-client && cd android && gradle assembleDebug
+#   npm run android:sync-client && cd android && gradle copyDebugApkToDist
 ```
 
 O task `preBuild` do Gradle já depende de `syncServerSources`, que copia
 `server/` para `android/app/src/main/python/server/` automaticamente — não é
-preciso sincronizar o backend manualmente. O APK sai em
-`android/app/build/outputs/apk/debug/app-debug.apk`, instalável direto
-(`adb install`) mas **não** para distribuição (ver aviso abaixo).
+preciso sincronizar o backend manualmente. `copyDebugApkToDist` depende de
+`assembleDebug` e, ao final, copia o resultado para `dist-apk/` na raiz do
+repo (mesma pasta gitignorada usada pelo `gh run download` na Opção A) —
+além de deixá-lo em `android/app/build/outputs/apk/debug/app-debug.apk`,
+instalável direto (`adb install`) mas **não** para distribuição (ver aviso
+abaixo).
 
 ### Opção C — build local assinado (release)
 
@@ -199,11 +202,14 @@ Mesmos pré-requisitos da Opção B, mais a keystore de assinatura — ver
 [Build local assinado](#build-local-assinado-opcional) mais abaixo.
 
 ```bash
-npm run android:sync-client
-cd android && gradle assembleRelease
+npm run android:build:release
+# equivalente a:
+#   npm run android:sync-client && cd android && gradle copyReleaseApkToDist
 ```
 
-APK assinado em `android/app/build/outputs/apk/release/app-release.apk`.
+`copyReleaseApkToDist` depende de `assembleRelease` e copia o APK assinado
+para `dist-apk/` na raiz do repo, além de
+`android/app/build/outputs/apk/release/app-release.apk`.
 
 ---
 
