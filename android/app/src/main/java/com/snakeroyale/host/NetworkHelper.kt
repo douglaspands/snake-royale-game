@@ -8,31 +8,68 @@ import java.net.Inet4Address
 import java.net.NetworkInterface
 import java.util.Collections
 
+/** One candidate IPv4 address found on a network interface, pre-resolved so the
+ * filter/priority rule below can be unit-tested without a real [NetworkInterface]. */
+internal data class NetworkAddressCandidate(
+    val interfaceName: String,
+    val isUp: Boolean,
+    val isLoopback: Boolean,
+    val ipv4Address: String,
+)
+
 object NetworkHelper {
+
+    /**
+     * Filters and prioritizes IPv4 candidates: excludes down/loopback interfaces and
+     * loopback/link-local addresses, and moves Wi-Fi/hotspot/LAN interfaces (wlan/ap/eth)
+     * to the front so they are preferred over other interfaces. Pure and unit-testable.
+     */
+    internal fun selectLocalIpAddresses(candidates: List<NetworkAddressCandidate>): List<String> {
+        val ipList = mutableListOf<String>()
+        for (candidate in candidates) {
+            if (!candidate.isUp || candidate.isLoopback) continue
+
+            val hostAddress = candidate.ipv4Address
+            if (!hostAddress.startsWith("127.") && !hostAddress.startsWith("169.254.")) {
+                // Prioritize wlan/ap interfaces
+                if (candidate.interfaceName.startsWith("wlan") ||
+                    candidate.interfaceName.startsWith("ap") ||
+                    candidate.interfaceName.startsWith("eth")
+                ) {
+                    ipList.add(0, hostAddress)
+                } else {
+                    ipList.add(hostAddress)
+                }
+            }
+        }
+        return ipList.distinct()
+    }
+
+    /** Formats the primary LAN endpoint URL, or the localhost fallback when [ips] is empty. Pure. */
+    internal fun buildServerUrl(ips: List<String>, port: Int): String =
+        if (ips.isNotEmpty()) "http://${ips.first()}:$port" else "http://localhost:$port"
 
     /**
      * Discovers active local IPv4 addresses on Wi-Fi, Hotspot, and LAN network interfaces.
      */
     fun getLocalIpAddresses(): List<String> {
-        val ipList = mutableListOf<String>()
+        val candidates = mutableListOf<NetworkAddressCandidate>()
 
         try {
             val interfaces = Collections.list(NetworkInterface.getNetworkInterfaces())
             for (intf in interfaces) {
-                if (!intf.isUp || intf.isLoopback) continue
-
                 val addrs = Collections.list(intf.inetAddresses)
                 for (addr in addrs) {
                     if (!addr.isLoopbackAddress && addr is Inet4Address) {
                         val hostAddress = addr.hostAddress ?: continue
-                        if (!hostAddress.startsWith("127.") && !hostAddress.startsWith("169.254.")) {
-                            // Prioritize wlan/ap interfaces
-                            if (intf.name.startsWith("wlan") || intf.name.startsWith("ap") || intf.name.startsWith("eth")) {
-                                ipList.add(0, hostAddress)
-                            } else {
-                                ipList.add(hostAddress)
-                            }
-                        }
+                        candidates.add(
+                            NetworkAddressCandidate(
+                                interfaceName = intf.name,
+                                isUp = intf.isUp,
+                                isLoopback = intf.isLoopback,
+                                ipv4Address = hostAddress,
+                            )
+                        )
                     }
                 }
             }
@@ -40,20 +77,13 @@ object NetworkHelper {
             e.printStackTrace()
         }
 
-        return ipList.distinct()
+        return selectLocalIpAddresses(candidates)
     }
 
     /**
      * Returns primary LAN endpoint URL (e.g. "http://192.168.1.100:8000") or localhost fallback.
      */
-    fun getPrimaryServerUrl(port: Int = 8000): String {
-        val ips = getLocalIpAddresses()
-        return if (ips.isNotEmpty()) {
-            "http://${ips.first()}:$port"
-        } else {
-            "http://localhost:$port"
-        }
-    }
+    fun getPrimaryServerUrl(port: Int = 8000): String = buildServerUrl(getLocalIpAddresses(), port)
 
     /**
      * Checks if the device is currently connected to Wi-Fi.
