@@ -41,8 +41,8 @@ android {
         applicationId = "com.snakeroyale.host"
         minSdk = 24
         targetSdk = 34
-        versionCode = 8
-        versionName = "1.7.0"
+        versionCode = 9
+        versionName = "1.7.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
@@ -153,6 +153,23 @@ tasks.matching { it.name.startsWith("merge") && it.name.endsWith("PythonSources"
         dependsOn("syncServerSources")
     }
 
+// Mirrors the assembled APK into the repo-root dist-apk/ folder -- the same
+// gitignored drop point `gh run download` already uses for CI artifacts, so both the
+// local and CI paths land in one place regardless of how the APK was produced.
+tasks.register<Copy>("copyDebugApkToDist") {
+    dependsOn("assembleDebug")
+    from(layout.buildDirectory.dir("outputs/apk/debug"))
+    include("*.apk")
+    into("${rootProject.projectDir}/../dist-apk")
+}
+
+tasks.register<Copy>("copyReleaseApkToDist") {
+    dependsOn("assembleRelease")
+    from(layout.buildDirectory.dir("outputs/apk/release"))
+    include("*.apk")
+    into("${rootProject.projectDir}/../dist-apk")
+}
+
 dependencies {
     implementation("androidx.core:core-ktx:1.13.1")
     implementation("androidx.appcompat:appcompat:1.6.1")
@@ -164,4 +181,19 @@ dependencies {
     // This is a Gradle dependency of the Android module only -- it never enters the
     // Chaquopy Python tree, so REQ-AND-008 is unaffected.
     implementation("com.google.zxing:core:3.5.3")
+
+    // Unit tests (JVM, no emulator) -- REQ-AND-011.
+    testImplementation("junit:junit:4.13.2")
+
+    // Instrumented tests (Espresso/UI, run on-device or on an emulator) -- REQ-AND-011.
+    // Versions checked against Google Maven metadata; 1.7.0/3.7.0 require minSdk 21+ and
+    // Kotlin 1.9.0+, both already satisfied by this module's minSdk 24 / Kotlin 1.9.24.
+    androidTestImplementation("androidx.test.ext:junit:1.3.0")
+    androidTestImplementation("androidx.test.espresso:espresso-core:3.7.0")
+    androidTestImplementation("androidx.test:runner:1.7.0")
+    androidTestImplementation("androidx.test:rules:1.7.0")
+    // Needed to decode the QR bitmap back on-device in QRCodeHelperInstrumentedTest;
+    // only declared as `implementation` above, which the androidTest source set does
+    // not automatically inherit at compile time.
+    androidTestImplementation("com.google.zxing:core:3.5.3")
 }

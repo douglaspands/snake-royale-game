@@ -274,10 +274,18 @@ class GameEngine:
             for idx, s in enumerate(sorted_snakes[:top_n])
         ]
 
-    def create_snapshot(self, timestamp: float | None = None) -> dict[str, Any]:
-        """Generates OpenSpec compliant WORLD_SNAPSHOT packet."""
+    def create_snapshot(
+        self, timestamp: float | None = None, tick_duration_ms: float | None = None
+    ) -> dict[str, Any]:
+        """Generates OpenSpec compliant WORLD_SNAPSHOT packet.
+
+        `tick_duration_ms` is additive/optional: when provided, it is included
+        as `tickDurationMs` — the real elapsed wall-clock time (ms) the game
+        loop consumed producing this tick. Omitted (None) means the field is
+        left out of the payload entirely.
+        """
         ts = timestamp if timestamp is not None else time.time() * 1000.0
-        return {
+        snapshot: dict[str, Any] = {
             "type": "WORLD_SNAPSHOT",
             "tick": self.tick,
             "timestamp": round(ts, 2),
@@ -285,3 +293,6 @@ class GameEngine:
             "foods": self.food_manager.to_list(),
             "leaderboard": self.get_leaderboard(top_n=10),
         }
+        if tick_duration_ms is not None:
+            snapshot["tickDurationMs"] = round(tick_duration_ms, 2)
+        return snapshot

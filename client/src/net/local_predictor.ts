@@ -38,7 +38,12 @@ export class LocalPredictor {
   // Smoothing offset for anti-snap reconciliation
   private _errorOffsetX: number = 0;
   private _errorOffsetY: number = 0;
-  public errorDecayRate: number = 15.0; // lambda for exp decay
+  public static readonly BASE_ERROR_DECAY_RATE: number = 15.0;
+  // Fast lambda reused for the post-stall eased catch-up (REQ-PROTO-009):
+  // exp(-40 * dt) collapses the visual offset within a short bounded window
+  // (~99% closed by ~115ms) instead of an instant teleport.
+  public static readonly STALL_CATCHUP_DECAY_RATE: number = 40.0;
+  public errorDecayRate: number = LocalPredictor.BASE_ERROR_DECAY_RATE; // lambda for exp decay
 
   private _inputBuffer: UnackedInput[] = [];
   public lastSeq: number = 0;
@@ -156,7 +161,19 @@ export class LocalPredictor {
     this.body = newBody;
   }
 
-  public reconcileSnapshot(serverSnake: InterpolatedSnake): void {
+  /**
+   * Reconciles the local prediction against an authoritative server snapshot.
+   *
+   * @param serverSnake authoritative snake state from the latest snapshot.
+   * @param followedKnownStall REQ-PROTO-009: true when this snapshot arrived
+   *   right after a known, flagged server-side stall (e.g. Android GC/JVM
+   *   contention pause) was detected. Defaults to false, which preserves the
+   *   original instant hard-snap behavior for any caller that doesn't pass it.
+   */
+  public reconcileSnapshot(
+    serverSnake: InterpolatedSnake,
+    followedKnownStall: boolean = false
+  ): void {
     if (!this._initialized) {
       this.initialize(serverSnake);
       return;
@@ -175,7 +192,23 @@ export class LocalPredictor {
     const dy = serverSnake.head.y - this.head.y;
     const drift = Math.hypot(dx, dy);
 
-    if (drift > 180.0) {
+    if (drift > 180.0 && followedKnownStall) {
+      // Drift is large, but it's explained by a known/flagged server stall
+      // rather than packet loss or a real desync. Snap the authoritative
+      // state in immediately (so future prediction simulates from the
+      // correct position), but leave the *visual* offset to catch up fast
+      // instead of teleporting -- reuses the existing error-decay easing at
+      // a much higher lambda so it resolves within a short bounded window.
+      const preCorrectionX = this.head.x;
+      const preCorrectionY = this.head.y;
+      this.head.x = serverSnake.head.x;
+      this.head.y = serverSnake.head.y;
+      this.head.angle = serverSnake.head.angle;
+      this.body = serverSnake.body.map((s) => ({ x: s.x, y: s.y }));
+      this._errorOffsetX = preCorrectionX - this.head.x;
+      this._errorOffsetY = preCorrectionY - this.head.y;
+      this.errorDecayRate = LocalPredictor.STALL_CATCHUP_DECAY_RATE;
+    } else if (drift > 180.0) {
       // Catastrophic desync (e.g. teleport or heavy lag spike) -> snap hard
       this.head.x = serverSnake.head.x;
       this.head.y = serverSnake.head.y;
@@ -183,8 +216,10 @@ export class LocalPredictor {
       this.body = serverSnake.body.map((s) => ({ x: s.x, y: s.y }));
       this._errorOffsetX = 0;
       this._errorOffsetY = 0;
+      this.errorDecayRate = LocalPredictor.BASE_ERROR_DECAY_RATE;
     } else if (drift >= 0.5) {
       // Smooth subtle error decay
+      this.errorDecayRate = LocalPredictor.BASE_ERROR_DECAY_RATE;
       this._errorOffsetX = dx * 0.4;
       this._errorOffsetY = dy * 0.4;
       this.head.x += dx * 0.6;

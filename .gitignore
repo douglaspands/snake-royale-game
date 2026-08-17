@@ -83,3 +83,7 @@ release_output/
 # Local `gh run download` artifact folders (Android APK, desktop executables)
 dist-apk/
 
+# Per-machine asdf version pin (fixes Chaquopy buildPython resolution locally;
+# not a project-wide constraint — pyproject.toml already pins Python 3.12+)
+.tool-versions
+

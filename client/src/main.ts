@@ -44,6 +44,9 @@ class SnakeRoyaleApp {
   private _localPlayerId: string | null = null;
   private _lastInputSendTime: number = 0;
   private _lastFrameTimeMs: number = 0;
+  // REQ-PROTO-009: last time a WORLD_SNAPSHOT arrived, used as a narrow local
+  // fallback stall signal for local-prediction reconciliation.
+  private _lastSnapshotArrivalMs: number = 0;
   private _inputSendIntervalMs: number = 33.33; // 30 Hz steady heartbeat stream
   private _inputSeq: number = 0;
   private _activeInputSource: InputSource = 'desktop'; // scheme that last fired onInputChange
@@ -112,10 +115,21 @@ class SnakeRoyaleApp {
       const now = performance.now();
       this._interpolator.pushSnapshot(snapshot, now);
 
+      // REQ-PROTO-009: narrow local stall signal for reconciliation, mirroring
+      // (but not depending on) the interpolator's own stall detection. Prefers
+      // the server-reported tick duration when present on the payload; falls
+      // back to the gap since the last snapshot arrival otherwise.
+      const tickDurationMs = (snapshot as { tickDurationMs?: number }).tickDurationMs;
+      const arrivalGapMs =
+        this._lastSnapshotArrivalMs > 0 ? now - this._lastSnapshotArrivalMs : 0;
+      const followedKnownStall =
+        typeof tickDurationMs === 'number' ? tickDurationMs > 200 : arrivalGapMs > 200;
+      this._lastSnapshotArrivalMs = now;
+
       if (this._localPlayerId) {
         const localServerSnake = snapshot.snakes.find((s) => s.id === this._localPlayerId);
         if (localServerSnake) {
-          this._localPredictor.reconcileSnapshot(localServerSnake);
+          this._localPredictor.reconcileSnapshot(localServerSnake, followedKnownStall);
         }
       }
     };

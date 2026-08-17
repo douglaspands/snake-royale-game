@@ -1,6 +1,6 @@
 {
   "name": "snake-battle-royale",
-  "version": "1.7.0",
+  "version": "1.7.1",
   "description": "Real-time Multiplayer Snake Battle Royale Game (Spec-Driven Development + Graph Engineering)",
   "private": true,
   "scripts": {
@@ -17,7 +17,8 @@
     "spec:list": "openspec list",
     "spec:view": "openspec view",
     "android:sync-client": "cd client && npm run build && mkdir -p ../android/app/src/main/assets/client_dist && cp -r dist/* ../android/app/src/main/assets/client_dist/",
-    "android:build": "npm run android:sync-client && cd android && ./gradlew assembleDebug"
+    "android:build": "npm run android:sync-client && cd android && gradle copyDebugApkToDist",
+    "android:build:release": "npm run android:sync-client && cd android && gradle copyReleaseApkToDist"
   },
   "keywords": [
     "snake",

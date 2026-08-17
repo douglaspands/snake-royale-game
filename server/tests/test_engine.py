@@ -158,6 +158,21 @@ def test_game_engine_snapshot_schema_validation(validator: type[SchemaValidator]
     assert len(snapshot["leaderboard"]) == 2
 
 
+def test_create_snapshot_includes_tick_duration_ms_when_provided():
+    """tickDurationMs is additive/optional: present only when explicitly passed."""
+    engine = GameEngine(arena_width=3000.0, arena_height=3000.0, tick_rate=30)
+    engine.register_player("p-1", "Viper", "neon_blue")
+    engine.spawn_player_snake("p-1")
+    engine.step(0.033)
+
+    snapshot_with = engine.create_snapshot(tick_duration_ms=42.5)
+    assert "tickDurationMs" in snapshot_with
+    assert snapshot_with["tickDurationMs"] == 42.5
+
+    snapshot_without = engine.create_snapshot()
+    assert "tickDurationMs" not in snapshot_without
+
+
 def test_snake_no_self_collision_pure_contact():
     """Verifies that a snake never collides with its own body even when looping tightly."""
     engine = GameEngine(arena_width=3000.0, arena_height=3000.0, tick_rate=30)

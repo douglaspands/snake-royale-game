@@ -81,3 +81,87 @@ jobs:
 
       - name: Build frontend distribution
         run: cd client && npm run build
+
+  android-unit-test:
+    name: Android Unit Tests (JVM, no emulator)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v5
+        with:
+          distribution: "temurin"
+          java-version: "17"
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v4
+
+      - name: Setup Gradle Build Tool
+        uses: gradle/actions/setup-gradle@v5
+        with:
+          gradle-version: "8.7"
+
+      # syncServerSources (wired into preBuild in android/app/build.gradle.kts) copies
+      # server/ into the Chaquopy Python source tree automatically -- no manual asset
+      # sync needed here, unlike the instrumented job below, since a plain JVM unit test
+      # run does not merge Android assets or resolve Chaquopy's pip dependencies.
+      - name: Run Android unit tests
+        run: |
+          cd android
+          gradle testDebugUnitTest --stacktrace
+
+  android-instrumented-test:
+    name: Android Instrumented Tests (Espresso, emulator)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v5
+        with:
+          node-version: 20
+          cache: "npm"
+          cache-dependency-path: client/package-lock.json
+
+      - name: Build Web Client SPA
+        run: |
+          cd client
+          npm ci
+          npm run build
+
+      - name: Sync Web Client to Android Assets
+        run: |
+          mkdir -p android/app/src/main/assets/client_dist
+          cp -r client/dist/* android/app/src/main/assets/client_dist/
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v5
+        with:
+          distribution: "temurin"
+          java-version: "17"
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v4
+
+      - name: Setup Gradle Build Tool
+        uses: gradle/actions/setup-gradle@v5
+        with:
+          gradle-version: "8.7"
+
+      # Required for hardware-accelerated emulation on GitHub-hosted Linux runners; see
+      # https://github.com/ReactiveCircus/android-emulator-runner#gotchas.
+      - name: Enable KVM group permissions
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Run Android instrumented tests on emulator
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          target: google_apis
+          arch: x86_64
+          working-directory: android
+          script: gradle connectedDebugAndroidTest --stacktrace

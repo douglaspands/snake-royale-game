@@ -1,7 +1,7 @@
 # 🐍 Snake Battle Royale Multiplayer
 
 [![CI](https://github.com/douglas/snake-game/actions/workflows/ci.yml/badge.svg)](file:///.github/workflows/ci.yml)
-[![OpenSpec v1.7.0-ANDROID-HOST](https://img.shields.io/badge/OpenSpec-v1.7.0--ANDROID--HOST-00f0ff.svg)](file:///home/douglas/Workspace/claude/snake-game/openspec/)
+[![OpenSpec v1.7.1-ANDROID-HOST](https://img.shields.io/badge/OpenSpec-v1.7.1--ANDROID--HOST-00f0ff.svg)](file:///home/douglas/Workspace/claude/snake-game/openspec/)
 [![Python 3.12+](https://img.shields.io/badge/Python-3.12%2B-blue.svg)](file:///home/douglas/Workspace/claude/snake-game/pyproject.toml)
 [![Starlette](https://img.shields.io/badge/Starlette-0.36%2B-009688.svg)](file:///home/douglas/Workspace/claude/snake-game/server/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.4-blue.svg)](file:///home/douglas/Workspace/claude/snake-game/client/)
@@ -153,7 +153,67 @@ graph TD
 
 ---
 
-## 📱 8. Release do APK Android (assinatura)
+## 📱 8. Compilar o APK Android
+
+O host Android embarca o servidor Python via **Chaquopy** (`compileSdk 34`,
+`minSdk 24`) dentro de um app Kotlin que serve o mesmo `client/dist` do build
+web. Existem três formas de gerar o APK, da mais simples à mais completa:
+
+### Opção A — via CI (recomendado, sem toolchain Android local)
+
+Dispara o mesmo workflow que gera o APK assinado publicado nas *Releases*, mas
+como *artifact* da execução — não precisa criar uma tag/release para rodar:
+
+```bash
+gh workflow run release.yml --ref <sua-branch>   # ou pelo botão "Run workflow" na aba Actions
+gh run watch                                      # acompanha a execução (~10-15 min)
+gh run download <run-id> -n snake-royale-apk-<sha>  # baixa o APK + .sha256 ao concluir
+```
+
+Requer os 4 secrets de assinatura (tabela abaixo) já configurados no
+repositório — sem eles o job falha cedo, antes de compilar, com uma mensagem
+apontando o secret ausente.
+
+### Opção B — build local (debug, não assinado)
+
+Pré-requisitos: **JDK 17**, **Android SDK** `compileSdk 34` (`ANDROID_HOME`/
+`ANDROID_SDK_ROOT` configurados) e **Gradle 8+** instalado no sistema — este
+repositório não versiona o wrapper (`gradlew`), use o `gradle` do seu ambiente
+(o CI usa a `8.7` via `gradle/actions/setup-gradle`).
+
+```bash
+npm run android:build
+# equivalente a:
+#   npm run android:sync-client && cd android && gradle copyDebugApkToDist
+```
+
+O task `preBuild` do Gradle já depende de `syncServerSources`, que copia
+`server/` para `android/app/src/main/python/server/` automaticamente — não é
+preciso sincronizar o backend manualmente. `copyDebugApkToDist` depende de
+`assembleDebug` e, ao final, copia o resultado para `dist-apk/` na raiz do
+repo (mesma pasta gitignorada usada pelo `gh run download` na Opção A) —
+além de deixá-lo em `android/app/build/outputs/apk/debug/app-debug.apk`,
+instalável direto (`adb install`) mas **não** para distribuição (ver aviso
+abaixo).
+
+### Opção C — build local assinado (release)
+
+Mesmos pré-requisitos da Opção B, mais a keystore de assinatura — ver
+[Build local assinado](#build-local-assinado-opcional) mais abaixo.
+
+```bash
+npm run android:build:release
+# equivalente a:
+#   npm run android:sync-client && cd android && gradle copyReleaseApkToDist
+```
+
+`copyReleaseApkToDist` depende de `assembleRelease` e copia o APK assinado
+para `dist-apk/` na raiz do repo, além de
+`android/app/build/outputs/apk/release/app-release.apk`.
+
+---
+
+## 📱 9. Release do APK Android (assinatura)
 
 O APK publicado nas *GitHub Releases* é um build **de release assinado**. Um build de
 debug não é distribuível: o Android 13 recusa o sideload de pacotes `debuggable`
@@ -219,7 +279,7 @@ aapt dump badging *.apk | grep -E "^package:|debuggable"  # sem .debug, sem debu
 
 ---
 
-## 🖥️ 9. Rodando o build desktop
+## 🖥️ 10. Rodando o build desktop
 
 Toda *GitHub Release* também publica um executável desktop single-file (Linux,
 Windows e macOS), gerado com [PyInstaller](https://pyinstaller.org/) a partir do

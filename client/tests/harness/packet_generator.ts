@@ -120,4 +120,64 @@ export class PacketGenerator {
 
     return stream;
   }
+
+  /**
+   * Simulates a server stall (e.g. an Android GC pause / JVM-ART CPU contention spike):
+   * one large inter-arrival gap of `durationMs`, followed by `resumeCount` snapshots
+   * resuming at the normal `intervalMs` cadence. Positions continue moving linearly at
+   * (vx, vy) across the stall so post-stall bursts can be checked for jump discontinuities.
+   *
+   * Returns arrival-time-tagged snapshots (`{ snapshot, clientArrivalMs }`) rather than a
+   * bare stream, since the stall's defining feature is its client arrival-time gap.
+   */
+  static injectStall(
+    durationMs: number,
+    startClientMs: number = 0,
+    initialX: number = 100,
+    initialY: number = 100,
+    vx: number = 180, // px per second
+    vy: number = 0,
+    resumeCount: number = 10,
+    intervalMs: number = 33.33
+  ): Array<{ snapshot: WorldSnapshotPayload; clientArrivalMs: number }> {
+    const angle = Math.atan2(vy, vx);
+    const dtStallSec = durationMs / 1000;
+
+    let curX = initialX;
+    let curY = initialY;
+    let clientTime = startClientMs;
+    let tick = 1;
+
+    const out: Array<{ snapshot: WorldSnapshotPayload; clientArrivalMs: number }> = [];
+
+    // Snapshot immediately before the stall.
+    out.push({
+      snapshot: this.createSnapshot(tick++, clientTime, [this.createLinearSnake('test-snake', curX, curY, angle)]),
+      clientArrivalMs: clientTime,
+    });
+
+    // The stall itself: world state keeps advancing server-side, but the client receives
+    // nothing until the gap closes.
+    curX += vx * dtStallSec;
+    curY += vy * dtStallSec;
+    clientTime += durationMs;
+    out.push({
+      snapshot: this.createSnapshot(tick++, clientTime, [this.createLinearSnake('test-snake', curX, curY, angle)]),
+      clientArrivalMs: clientTime,
+    });
+
+    // Resume normal-interval snapshots after the stall clears.
+    for (let i = 0; i < resumeCount; i++) {
+      const dtSec = intervalMs / 1000;
+      curX += vx * dtSec;
+      curY += vy * dtSec;
+      clientTime += intervalMs;
+      out.push({
+        snapshot: this.createSnapshot(tick++, clientTime, [this.createLinearSnake('test-snake', curX, curY, angle)]),
+        clientArrivalMs: clientTime,
+      });
+    }
+
+    return out;
+  }
 }
