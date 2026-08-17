@@ -58,6 +58,20 @@ class ServerForegroundService : Service() {
             }
             context.startService(intent)
         }
+
+        // WIFI_MODE_FULL_HIGH_PERF is a documented no-op from API 29 onward: the Wi-Fi
+        // radio is free to enter power-save regardless, so once the screen sleeps other
+        // devices on the network silently lose the ability to reach the embedded server
+        // (the host device itself is unaffected, since it talks over localhost/loopback,
+        // not the Wi-Fi radio). WIFI_MODE_FULL_LOW_LATENCY is the functional replacement
+        // on API 29+; below that, HIGH_PERF is still the only option. See REQ-AND-005.
+        @Suppress("DEPRECATION")
+        internal fun resolveWifiLockMode(sdkInt: Int): Int =
+            if (sdkInt >= Build.VERSION_CODES.Q) {
+                WifiManager.WIFI_MODE_FULL_LOW_LATENCY
+            } else {
+                WifiManager.WIFI_MODE_FULL_HIGH_PERF
+            }
     }
 
     override fun onBind(intent: Intent?): IBinder? = null
@@ -217,7 +231,7 @@ class ServerForegroundService : Service() {
 
             val wifiManager = applicationContext.getSystemService(Context.WIFI_SERVICE) as WifiManager
             wifiLock = wifiManager.createWifiLock(
-                WifiManager.WIFI_MODE_FULL_HIGH_PERF,
+                resolveWifiLockMode(Build.VERSION.SDK_INT),
                 "SnakeRoyale::ServerWifiLock"
             ).apply {
                 acquire()
