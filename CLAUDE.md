@@ -68,6 +68,7 @@ Padrão estabelecido nas releases 1.5.x (ver `openspec/changes/archive/`):
 - **`tasks.md` na topologia DAG** de Graph Engineering: `Node 0` (ambiente e validação de specs), `B1-B3` (backend/infra), `F1-F3` (frontend), `INT` (quality gates), `DOC` (sync de specs).
 - Ao arquivar, prefixar com a data: `openspec/changes/archive/AAAA-MM-DD-<change-id>/`.
 - Ao mexer no Android, manter `versionCode`/`versionName` em `android/app/build.gradle.kts` sincronizados com a tag da release.
+- **Arquivamento da change e tag/publish/release NUNCA são automáticos**, mesmo quando aparecem como tasks no `tasks.md` (ex.: `Node DOC` "Archive" / "Tag and publish release"). São ações efetuadas **somente mediante solicitação explícita do usuário**, feita após ele avaliar o trabalho concluído — nunca encadeadas automaticamente ao final de um `/opsx-apply`, `/opsx-sync` ou execução de DAG. `git tag`/`git push --tags` e `gh release create` publicam artefatos e disparam CI/CD (`release.yml` builda e assina o APK) — ver "Executando actions with care" nas instruções gerais do agente. Ao chegar nesse ponto do DAG, pare e reporte que archive/tag/release estão prontos para execução, aguardando o usuário pedir explicitamente.
 
 ---
 
@@ -82,6 +83,12 @@ Quando uma change toca conjuntos de arquivos disjuntos (ex.: `android/` + `clien
 - **Lanes não rodam o gate raiz.** O worktree de uma lane contém só um pedaço da change; `npm test` e `npm run lint` são do `Node INT`, sobre a árvore já mesclada.
 - **Ordem de merge explícita** quando duas lanes tocam o mesmo arquivo em regiões distintas — declare quem entra primeiro e quem rebaseia.
 - **Nós que ficam no orquestrador:** `0`, `MERGE`, `INT`, `VAL` (validação em device físico) e `DOC`.
+
+---
+
+## 🔁 Loop Engineering
+
+Contrato de temporização do game loop autoritativo (accumulator/catch-up, `tickDurationMs`, sinal de stall no interpolador/predictor cliente) — ver [`docs/LOOP_ENGINEERING.md`](docs/LOOP_ENGINEERING.md) e o checklist de pré-voo lá descrito antes de qualquer mudança que toque o timestep. Referência viva: `openspec/changes/archive/*-v1-7-1-hotfix-android-loop-sync/` (caso de estudo do bug original: loop sem acumulador, spiral-of-death, snapping visível no cliente).
 
 ---
 

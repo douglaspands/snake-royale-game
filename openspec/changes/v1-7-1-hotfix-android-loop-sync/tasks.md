@@ -109,6 +109,20 @@ Allowlist: `android/app/src/main/java/com/snakeroyale/host/ServerForegroundServi
 - [x] A1.1 In `acquireLocks()`, change `wakeLock?.acquire(10 * 60 * 1000L /* 10 minutes timeout refresh */)` to an indefinite `wakeLock?.acquire()`, updating the inline comment to explain why (per design.md Decision 6: `onDestroy()` already reliably releases it on stop)
 - [x] A1.2 Confirm by inspection that `onDestroy()` (or the existing release path) still releases the WakeLock unconditionally on service stop — no change expected here, verify only
 - [x] A1.3 Report: exact diff, and confirm (as prior Android-lane work in this repo has had to) whether the change was compiled locally or only verifiable via CI, given no Gradle wrapper/`ANDROID_HOME` may be available in the worktree
+- [x] A1.4 On-device validation (Node VAL, task 8.2) surfaced a second `REQ-AND-005` defect: `WifiLock` acquired with `WIFI_MODE_FULL_HIGH_PERF`, which is a documented no-op on API 29+, letting the Wi-Fi radio enter power-save and making the embedded server unreachable from other devices on the network (host device unaffected, since it talks to the server via `localhost`/loopback, not the Wi-Fi radio)
+- [x] A1.5 In `acquireLocks()`, switch the `WifiLock` mode to `WIFI_MODE_FULL_LOW_LATENCY` on `Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q`, keeping `WIFI_MODE_FULL_HIGH_PERF` below that (minSdk 24); extract the SDK-conditioned choice into a small pure/testable function (`resolveWifiLockMode(sdkInt: Int): Int`)
+- [x] A1.6 Report: exact diff, and confirm whether compiled locally or only verifiable via CI (same constraint as A1.3)
+
+## 5b. Android Test Infrastructure *(owns `REQ-AND-011`, added after Node VAL surfaced there were no Android tests or CI job at all)*
+
+Files: `android/app/build.gradle.kts` (test deps), `android/app/src/test/java/com/snakeroyale/host/*.kt` (new unit tests), `android/app/src/androidTest/java/com/snakeroyale/host/*.kt` (new instrumented tests), `.github/workflows/ci.yml` (new jobs).
+
+- [x] 5b.1 Add `testImplementation("junit:junit:4.13.2")`; extract `NetworkHelper.selectLocalIpAddresses(candidates)` and `NetworkHelper.buildServerUrl(ips, port)` as pure functions out of `getLocalIpAddresses()`/`getPrimaryServerUrl()` so the IP filter/priority logic and URL formatting are unit-testable without a real `NetworkInterface`
+- [x] 5b.2 Add `NetworkHelperTest.kt`, `QRCodeHelperTest.kt` (tests `isReachableByPeers`), and `ServerForegroundServiceWifiLockModeTest.kt` (regression test for A1.5: SDK 28 → `WIFI_MODE_FULL_HIGH_PERF`, SDK 29/34 → `WIFI_MODE_FULL_LOW_LATENCY`) under `android/app/src/test/java/com/snakeroyale/host/`
+- [x] 5b.3 Add `androidTestImplementation` deps: `androidx.test.ext:junit:1.3.0`, `androidx.test.espresso:espresso-core:3.7.0`, `androidx.test:runner:1.7.0`, `androidx.test:rules:1.7.0`, `com.google.zxing:core:3.5.3` (versions checked against Google Maven metadata at implementation time)
+- [x] 5b.4 Add `QRCodeHelperInstrumentedTest.kt` (QR encode/decode round-trip via ZXing on-device — regression guard for the v1.6.0 undecodable-QR bug, REQ-AND-002), `MainActivityInstrumentedTest.kt` (dashboard views visible via `ActivityScenario`+Espresso), `ServerForegroundServiceInstrumentedTest.kt` (starts the real service, polls `/health` via both `localhost` and the LAN IP from `NetworkHelper` — closest automated guard for the A1.4/A1.5 bug class) under `android/app/src/androidTest/java/com/snakeroyale/host/`
+- [x] 5b.5 Add `android-unit-test` (`gradle testDebugUnitTest`, no emulator) and `android-instrumented-test` (`reactivecircus/android-emulator-runner@v2`, API 34 `google_apis`/`x86_64`, `gradle connectedDebugAndroidTest`) jobs to `.github/workflows/ci.yml`, mirroring `release.yml`'s JDK/Android SDK/Gradle setup and asset-sync steps
+- [x] 5b.6 Report: files changed, and confirm whether the new jobs were exercised (this environment has no `gradlew`/`ANDROID_HOME`, so real verification is CI-only, same constraint as A1.3/A1.6)
 
 ---
 
@@ -137,9 +151,9 @@ Allowlist: `android/app/src/main/java/com/snakeroyale/host/ServerForegroundServi
 
 ## 9. Node DOC — Spec Sync, Loop Engineering Docs & Archive *(orchestrator)*
 
-- [ ] 9.1 Run `/opsx-sync` to merge the `loop` capability (new), and the modified `REQ-PROTO-004`/added `REQ-PROTO-008`/`REQ-PROTO-009`, and modified `REQ-AND-005` into their respective main specs
-- [ ] 9.2 Run `npm run spec:doctor` and confirm no orphaned or duplicated requirement identifiers
-- [ ] 9.3 Write `docs/LOOP_ENGINEERING.md` covering: the accumulator/catch-up contract, why `MAX_FRAME_TIME`/`MAX_CATCHUP_STEPS` exist, this bug as the worked example, and a pre-flight checklist for future timestep-touching changes
-- [ ] 9.4 Add a new `## 🔁 Loop Engineering` section to `CLAUDE.md`, placed immediately after `## 🧩 Execução paralela com sub-agentes`, pointing at `docs/LOOP_ENGINEERING.md` and at this change as the living reference
-- [ ] 9.5 Archive as `openspec/changes/archive/AAAA-MM-DD-v1-7-1-hotfix-android-loop-sync/`
-- [ ] 9.6 Tag and publish release `v1.7.1`, then verify the published asset and its checksum
+- [x] 9.1 Run `/opsx-sync` to merge the `loop` capability (new), and the modified `REQ-PROTO-004`/added `REQ-PROTO-008`/`REQ-PROTO-009`, and modified `REQ-AND-005` into their respective main specs
+- [x] 9.2 Run `npm run spec:doctor` and confirm no orphaned or duplicated requirement identifiers
+- [x] 9.3 Write `docs/LOOP_ENGINEERING.md` covering: the accumulator/catch-up contract, why `MAX_FRAME_TIME`/`MAX_CATCHUP_STEPS` exist, this bug as the worked example, and a pre-flight checklist for future timestep-touching changes
+- [x] 9.4 Add a new `## 🔁 Loop Engineering` section to `CLAUDE.md`, placed immediately after `## 🧩 Execução paralela com sub-agentes`, pointing at `docs/LOOP_ENGINEERING.md` and at this change as the living reference
+- [ ] 9.5 **Gated — requires explicit user request after evaluation, never auto-run.** Archive as `openspec/changes/archive/AAAA-MM-DD-v1-7-1-hotfix-android-loop-sync/`
+- [ ] 9.6 **Gated — requires explicit user request after evaluation, never auto-run.** Tag and publish release `v1.7.1`, then verify the published asset and its checksum
