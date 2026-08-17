@@ -3,6 +3,7 @@ package com.snakeroyale.host
 import android.Manifest
 import androidx.test.core.app.ActivityScenario
 import androidx.test.espresso.Espresso.onView
+import androidx.test.espresso.action.ViewActions.scrollTo
 import androidx.test.espresso.assertion.ViewAssertions.matches
 import androidx.test.espresso.matcher.ViewMatchers.isDisplayed
 import androidx.test.espresso.matcher.ViewMatchers.withId
@@ -36,9 +37,12 @@ class MainActivityInstrumentedTest {
         scenario = ActivityScenario.launch(MainActivity::class.java)
 
         // These are always visible regardless of QR reachability (REQ-AND-002 gates only
-        // ivQrCode/tvQrHint, which are mutually exclusive -- not asserted here).
-        onView(withId(R.id.tvLanIpAddress)).check(matches(isDisplayed()))
-        onView(withId(R.id.btnCopyIp)).check(matches(isDisplayed()))
-        onView(withId(R.id.btnShare)).check(matches(isDisplayed()))
+        // ivQrCode/tvQrHint, which are mutually exclusive -- not asserted here). The
+        // dashboard layout is a ScrollView, so a view further down (btnShare) can start
+        // outside the viewport on a shorter emulator screen -- scrollTo() is a no-op when
+        // the view is already fully visible, and brings it into view otherwise.
+        onView(withId(R.id.tvLanIpAddress)).perform(scrollTo()).check(matches(isDisplayed()))
+        onView(withId(R.id.btnCopyIp)).perform(scrollTo()).check(matches(isDisplayed()))
+        onView(withId(R.id.btnShare)).perform(scrollTo()).check(matches(isDisplayed()))
     }
 }
